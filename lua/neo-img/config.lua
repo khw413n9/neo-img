@@ -8,12 +8,7 @@ M.defaults = {
     ['gif'] = true,
     ['webp'] = true
   },
-  window = {
-    width = 0.8,      -- Percentage of screen width
-    height = 0.8,     -- Percentage of screen height
-    border = 'rounded'
-  },
-  auto_open = true   -- Automatically open images when buffer is loaded
+  auto_open = true -- Automatically open images when buffer is loaded
 }
 
 local config = M.defaults
