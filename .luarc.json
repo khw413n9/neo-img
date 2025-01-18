@@ -1,0 +1,10 @@
+{
+  "workspace.library": [
+    "path/to/neovim/runtime/lua",
+    "${3rd}/luv/library"
+  ],
+  "runtime.version": "LuaJIT",
+  "diagnostics.globals": [
+    "vim"
+  ]
+}

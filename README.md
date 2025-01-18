@@ -1,29 +1,19 @@
 # neo-img
 
-A Neovim plugin for viewing images in the terminal using viu.
+A Neovim plugin for viewing images in the terminal (currently only viu is supported).
 
 ## Features
 - Automatically preview supported image files
-- Floating window display
-- Configurable window size and appearance
-- Automatic viu installation if not present
+- Oil.nvim preview support
 
 ## Installation
 
-Using packer.nvim:
+Using lazy.nvim:
 ```lua
-use {
-    'yourusername/neo-img',
+return {
+    'skardyy/neo-img',
     config = function()
-        require('neo-img').setup({
-            -- Optional configuration
-            window = {
-                width = 0.8,
-                height = 0.8,
-                border = 'rounded'
-            },
-            auto_open = true
-        })
+        require('neo-img').setup()
     end
 }
 ```
@@ -42,11 +32,12 @@ require('neo-img').setup({
         ['gif'] = true,
         ['webp'] = true
     },
-    window = {
-        width = 0.8,  -- Percentage of screen width
-        height = 0.8, -- Percentage of screen height
-        border = 'rounded'
-    },
     auto_open = true  -- Automatically open images when buffer is loaded
+    oil_preview = true -- oil preview support
 })
 ```
+
+> \[!Note]
+> Nvim currently doesn't support things like wezterm or kitty graphic protocols
+> so the images will be rendered using the lower half blocks (worse quality)
+> when nvim (if) will implement those protocols it will look great :)
