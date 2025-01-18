@@ -1,5 +1,5 @@
 # neo-img  
-A Neovim plugin for viewing images in the terminal (currently only viu is supported).  
+A Neovim plugin for viewing images in the terminal (currently only chafa is supported).  
 
 ## Demo  
 https://github.com/user-attachments/assets/d784b594-4b4a-406b-94c5-0ebffd820c57
@@ -15,7 +15,8 @@ Using lazy.nvim:
 ```lua
 return {
     'skardyy/neo-img',
-    build = "cargo installv viu",
+    -- build = "winget install hpjansson.Chafa", -- requires chafa
+    -- build = "pacman -S chafa",
     config = function()
         require('neo-img').setup()
     end
@@ -38,7 +39,7 @@ require('neo-img').setup({
     },
     auto_open = true,   -- Automatically open images when buffer is loaded
     oil_preview = true, -- Oil preview support
-    backend = "viu"     -- Only 1 currently
+    backend = "chafa"     -- Only 1 currently
 })
 ```
 

@@ -10,7 +10,7 @@ M.defaults = {
   },
   auto_open = true,   -- Automatically open images when buffer is loaded
   oil_preview = true, -- changes oil preview of images too
-  backend = "viu"     -- only one currently
+  backend = "chafa"   -- only one currently
 }
 
 local config = M.defaults

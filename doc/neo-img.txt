@@ -1,14 +1,14 @@
-*neo-img.txt*  Image viewer for Neovim using viu
+*neo-img.txt*  Simple Image viewer for Neovim
 
 INTRODUCTION                                    *neo-img*
 
-Neo-img is a plugin that provides image viewing capabilities within Neovim using
-the viu terminal image viewer.
+Neo-img is a simple plugin that provides image viewing capabilities within Neovim using
+the chafa terminal image viewer.
 
 COMMANDS                                        *neo-img-commands*
 
 :NeoImgShow                                     *:NeoImgShow*
-    Display the current file using viu in a floating window.
+    replace the current file into a img-view
 
 CONFIGURATION                                   *neo-img-configuration*
 
