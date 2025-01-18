@@ -48,16 +48,21 @@ function M.display_image(filepath)
 
   local buf, win = M.create_float_window()
 
-  -- Run viu and capture output
-  local command = string.format('viu "%s"', filepath)
+  -- Run viu with the -n flag to disable ANSI colors
+  local command = string.format('viu -n "%s"', filepath)
   local handle = io.popen(command)
   local result = handle:read('*a')
   handle:close()
 
-  -- Split the output into lines
+  -- Function to strip ANSI escape sequences if any remain
+  local function strip_ansi(str)
+    return str:gsub('\27%[[0-9;]*m', '')
+  end
+
+  -- Split the output into lines and strip ANSI codes
   local lines = {}
   for line in result:gmatch("[^\r\n]+") do
-    table.insert(lines, line)
+    table.insert(lines, strip_ansi(line))
   end
 
   -- Set the lines in the buffer
