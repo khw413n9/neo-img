@@ -5,7 +5,6 @@ A Neovim plugin for viewing images in the terminal (currently only viu is suppor
 https://github.com/user-attachments/assets/d784b594-4b4a-406b-94c5-0ebffd820c57
 
 
-
 ## Features
 - Automatically preview supported image files
 - Oil.nvim preview support
@@ -37,12 +36,13 @@ require('neo-img').setup({
         ['gif'] = true,
         ['webp'] = true
     },
-    auto_open = true  -- Automatically open images when buffer is loaded
-    oil_preview = true -- oil preview support
+    auto_open = true,   -- Automatically open images when buffer is loaded
+    oil_preview = true, -- Oil preview support
+    backend = "viu"     -- Only 1 currently
 })
 ```
 
 > \[!Note]
-> Nvim currently doesn't support things like wezterm or kitty graphic protocols  
+> Nvim currently doesn't support things like kitty graphic protocol
 > so the images will be rendered using the lower half blocks (worse quality)  
 > when nvim (if) will implement those protocols it will look great :)  
