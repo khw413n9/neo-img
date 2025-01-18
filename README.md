@@ -1,6 +1,10 @@
-# neo-img
+# neo-img  
+A Neovim plugin for viewing images in the terminal (currently only viu is supported).  
 
-A Neovim plugin for viewing images in the terminal (currently only viu is supported).
+## Demo  
+https://github.com/user-attachments/assets/d784b594-4b4a-406b-94c5-0ebffd820c57
+
+
 
 ## Features
 - Automatically preview supported image files
@@ -12,6 +16,7 @@ Using lazy.nvim:
 ```lua
 return {
     'skardyy/neo-img',
+    build = "cargo installv viu",
     config = function()
         require('neo-img').setup()
     end
@@ -38,6 +43,6 @@ require('neo-img').setup({
 ```
 
 > \[!Note]
-> Nvim currently doesn't support things like wezterm or kitty graphic protocols
-> so the images will be rendered using the lower half blocks (worse quality)
-> when nvim (if) will implement those protocols it will look great :)
+> Nvim currently doesn't support things like wezterm or kitty graphic protocols  
+> so the images will be rendered using the lower half blocks (worse quality)  
+> when nvim (if) will implement those protocols it will look great :)  
