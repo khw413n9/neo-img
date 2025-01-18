@@ -43,9 +43,11 @@ function M.setup_autocommands()
           if #wins > 1 then
             for _, win in ipairs(wins) do
               if win ~= active_win then
-                local entry = require("oil").get_cursor_entry()
+                local oil = require("oil")
+                local entry = oil.get_cursor_entry()
+                local dir = oil.get_current_dir()
                 if entry ~= nil then
-                  local filepath = entry.parsed_name
+                  local filepath = dir .. entry.parsed_name
                   local ext = M.get_extension(filepath)
 
                   if ext and config.supported_extensions[ext:lower()] then
