@@ -10,7 +10,7 @@ function M.display_image(filepath)
     return
   end
 
-  vim.fn.termopen('viu -n "' .. filepath .. '"')
+  vim.fn.termopen('viu -b -n "' .. filepath .. '"')
 end
 
 function M.setup_autocommands()
@@ -54,7 +54,7 @@ function M.setup_autocommands()
                     local buf_id = vim.api.nvim_win_get_buf(win)
                     vim.api.nvim_win_call(win, function()
                       vim.api.nvim_buf_set_option(buf_id, 'modified', false)
-                      vim.fn.termopen('viu -n "' .. filepath .. '"')
+                      vim.fn.termopen('viu -b -n "' .. filepath .. '"')
                     end)
                   end
                 end
