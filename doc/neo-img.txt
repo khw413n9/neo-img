@@ -1,0 +1,20 @@
+*neo-img.txt*  Image viewer for Neovim using viu
+
+INTRODUCTION                                    *neo-img*
+
+Neo-img is a plugin that provides image viewing capabilities within Neovim using
+the viu terminal image viewer.
+
+COMMANDS                                        *neo-img-commands*
+
+:NeoImgShow                                     *:NeoImgShow*
+    Display the current file using viu in a floating window.
+
+CONFIGURATION                                   *neo-img-configuration*
+
+The plugin can be configured using the setup function:
+>
+    require('neo-img').setup({
+        -- Configuration options here
+    })
+<
