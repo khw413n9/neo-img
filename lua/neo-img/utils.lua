@@ -1,4 +1,14 @@
 local M = {}
+local config = require('neo-img.config').get()
+
+local command
+if config.backend == "kitty" then
+  command = 'kitty +kitten icat "'
+elseif config.backend == "chafa" then
+  command = 'chafa --align=center "'
+else
+  command = 'viu "'
+end
 
 function M.get_extension(filename)
   return filename:match("^.+%.(.+)$")
@@ -10,7 +20,7 @@ function M.display_image(filepath)
     return
   end
 
-  vim.fn.termopen('chafa --align=center "' .. filepath .. '"')
+  vim.fn.termopen(command .. filepath .. '"')
 end
 
 function M.setup_autocommands()
@@ -54,7 +64,7 @@ function M.setup_autocommands()
                     local buf_id = vim.api.nvim_win_get_buf(win)
                     vim.api.nvim_win_call(win, function()
                       vim.api.nvim_buf_set_option(buf_id, 'modified', false)
-                      vim.fn.termopen('chafa --align=center "' .. filepath .. '"')
+                      vim.fn.termopen(command .. filepath .. '"')
                     end)
                   end
                 end
