@@ -37,11 +37,11 @@ require('neo-img').setup({
     },
     auto_open = true,   -- Automatically open images when buffer is loaded
     oil_preview = true, -- Oil preview support
-    backend = "chafa" -- chafa / viu / kitty
+    backend = "viu" -- chafa / viu / kitty
 })
 ```
 
 > \[!Note]
-> Nvim currently doesn't support things like kitty graphic protocol or pixel. 
+> Nvim currently doesn't support things like kitty graphic protocol or sixels. 
 > so the images will be rendered using the lower half blocks (worse quality)  
 > when nvim (if) will implement those protocols it will look great :)  
