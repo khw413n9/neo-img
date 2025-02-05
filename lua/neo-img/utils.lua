@@ -1,30 +1,35 @@
 local M = {}
 local config = require('neo-img.config').get()
 
-local command
-if config.backend == "kitty" then
-  command = 'kitty +kitten icat "'
-elseif config.backend == "chafa" then
-  command = 'chafa --align=center "'
-else
-  command = 'viu "'
+local echoraw = function(str)
+  vim.fn.chansend(vim.v.stderr, str)
 end
 
-function M.get_extension(filename)
+local get_extension = function(filename)
   return filename:match("^.+%.(.+)$")
 end
 
-function M.display_image(filepath)
+local display_image = function(filepath)
+  local command
+  if config.backend == "kitty" then
+    command = 'kitty +kitten icat "'
+  elseif config.backend == "chafa" then
+    command = 'chafa --align=center -s 60 --format=sixels "'
+  else
+    command = 'viu "'
+  end
+  command = command .. filepath .. '"'
+
   if vim.fn.filereadable(filepath) == 0 then
     vim.notify("File not found: " .. filepath, vim.log.levels.ERROR)
     return
   end
 
-  vim.fn.termopen(command .. filepath .. '"')
+  echoraw(vim.fn.system(command))
+  -- vim.fn.termopen(command .. filepath .. '"')
 end
 
 function M.setup_autocommands()
-  local config = require('neo-img.config').get()
   local group = vim.api.nvim_create_augroup('NeoImg', { clear = true })
 
   if config.auto_open then
@@ -33,10 +38,10 @@ function M.setup_autocommands()
       pattern = "*",
       callback = function()
         local filepath = vim.fn.expand('%:p')
-        local ext = M.get_extension(filepath)
+        local ext = get_extension(filepath)
 
         if ext and config.supported_extensions[ext:lower()] then
-          M.display_image(filepath)
+          display_image(filepath)
         end
       end
     })
@@ -58,13 +63,13 @@ function M.setup_autocommands()
                 local dir = oil.get_current_dir()
                 if entry ~= nil then
                   local filepath = dir .. entry.parsed_name
-                  local ext = M.get_extension(filepath)
+                  local ext = get_extension(filepath)
 
                   if ext and config.supported_extensions[ext:lower()] then
                     local buf_id = vim.api.nvim_win_get_buf(win)
                     vim.api.nvim_win_call(win, function()
                       vim.api.nvim_buf_set_option(buf_id, 'modified', false)
-                      vim.fn.termopen(command .. filepath .. '"')
+                      display_image(filepath)
                     end)
                   end
                 end
