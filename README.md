@@ -1,5 +1,5 @@
 # neo-img  
-A Neovim plugin for viewing images in the terminal (currently only chafa is supported).  
+A Neovim plugin for viewing images in the terminal.  
 
 ## Demo  
 https://github.com/user-attachments/assets/d784b594-4b4a-406b-94c5-0ebffd820c57
@@ -15,8 +15,6 @@ Using lazy.nvim:
 ```lua
 return {
     'skardyy/neo-img',
-    -- build = "winget install hpjansson.Chafa", -- requires chafa
-    -- build = "pacman -S chafa",
     config = function()
         require('neo-img').setup()
     end
@@ -39,11 +37,11 @@ require('neo-img').setup({
     },
     auto_open = true,   -- Automatically open images when buffer is loaded
     oil_preview = true, -- Oil preview support
-    backend = "chafa"     -- Only 1 currently
+    backend = "viu" -- chafa / viu / kitty
 })
 ```
 
 > \[!Note]
-> Nvim currently doesn't support things like kitty graphic protocol
+> Nvim currently doesn't support things like kitty graphic protocol or sixels. 
 > so the images will be rendered using the lower half blocks (worse quality)  
 > when nvim (if) will implement those protocols it will look great :)  
