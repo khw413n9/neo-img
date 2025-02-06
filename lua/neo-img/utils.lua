@@ -35,6 +35,8 @@ end
 local function build_command(filepath, image_width)
   if config.backend == "kitty" then
     return { "kitty", "+kitten", "icat", filepath }
+  elseif config.backend == "wezterm" then
+    return { "wezterm", "imgcat", filepath }
   elseif config.backend == "magick" then
     return { "magick", filepath, "-resize", image_width, "sixel:-" }
   end
