@@ -37,11 +37,7 @@ require('neo-img').setup({
     },
     auto_open = true,   -- Automatically open images when buffer is loaded
     oil_preview = true, -- Oil preview support
-    backend = "viu" -- chafa / viu / kitty
+    backend = "magick", -- magick / kitty (requires intalling magick or using a terminal that supports kitty graphic protocol)
+    size = 1300, -- the max size that the screen can render without scrolling (does calculation based on that, run the magick or kitty command with resize to test the max size)
 })
 ```
-
-> \[!Note]
-> Nvim currently doesn't support things like kitty graphic protocol or sixels. 
-> so the images will be rendered using the lower half blocks (worse quality)  
-> when nvim (if) will implement those protocols it will look great :)  

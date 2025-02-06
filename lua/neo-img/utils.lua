@@ -1,18 +1,29 @@
 local M = {}
 local config = require('neo-img.config').get()
 
-local echoraw = function(str)
-  local win_height         = vim.api.nvim_win_get_height(0)
-  local win_width          = vim.api.nvim_win_get_width(0)
-  local win_top            = vim.fn.line('w0')
+local get_dims = function(win)
+  local bias     = 1
 
-  local image_height_cells = math.floor(400 / 16)
-  local image_width_cells  = math.floor(600 / 8)
-  local row                = win_top + math.floor(win_height / 2) - math.floor(image_height_cells / 2)
-  local col                = math.floor(win_width / 2) - math.floor(image_width_cells / 2)
+  local row, col = unpack(vim.api.nvim_win_get_position(win))
+  local width    = vim.api.nvim_win_get_width(win)
 
-  local move_cursor        = string.format("\27[%d;%dH", row, col)
-  local full_str           = "\27[s" .. move_cursor .. str .. "\27[u"
+  if col == 0 then
+    bias = 0.8
+  end
+
+  local col_w        = config.size / (width + col)
+  local img_w        = col_w * width * bias
+  local img_ratio    = 16 / 9
+
+  local start_row    = row + 3
+  local column_bias  = col + (width / img_ratio / 4 / bias)
+  local start_column = math.floor(column_bias)
+  return img_w, start_row, start_column
+end
+
+local echoraw = function(str, start_row, start_column)
+  local move_cursor = string.format("\27[%d;%dH", start_row, start_column)
+  local full_str    = "\27[s" .. move_cursor .. str .. "\27[u"
 
   vim.fn.chansend(vim.v.stderr, full_str)
 end
@@ -21,30 +32,50 @@ local get_extension = function(filename)
   return filename:match("^.+%.(.+)$")
 end
 
-local function build_command(filepath)
+local function build_command(filepath, image_width)
   if config.backend == "kitty" then
     return { "kitty", "+kitten", "icat", filepath }
   elseif config.backend == "magick" then
-    return { "magick", filepath, "-resize", "600x400", "sixel:-" }
+    return { "magick", filepath, "-resize", image_width, "sixel:-" }
   end
 end
 
-local display_image = function(filepath)
+local display_image = function(filepath, win)
   if vim.fn.filereadable(filepath) == 0 then
     vim.notify("File not found: " .. filepath, vim.log.levels.ERROR)
     return
   end
 
+  local image_width, start_row, start_column = get_dims(win)
+
   -- new buffer so gibbrish won't show and remove the echo
-  local buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_option(buf, "modifiable", false)
-  vim.api.nvim_set_current_buf(buf)
+  vim.api.nvim_win_call(win, function()
+    local buf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_option(buf, "modifiable", false)
+    vim.api.nvim_set_current_buf(buf)
+
+    -- delete usless buf
+    local prev_buf = vim.fn.bufnr('#')
+    if prev_buf ~= -1 then
+      vim.api.nvim_buf_delete(prev_buf, { force = true })
+    end
+
+    local augroup = vim.api.nvim_create_augroup("MyBufferGroup", { clear = true })
+    vim.api.nvim_create_autocmd({ "BufDelete", "BufHidden", "BufUnload" }, {
+      buffer = buf,
+      group = augroup,
+      once = true,
+      callback = function()
+        vim.api.nvim_command('mode')
+      end,
+    })
+  end)
 
   vim.api.nvim_command('mode')
-  local command = build_command(filepath)
+  local command = build_command(filepath, image_width)
   vim.system(command, {}, function(obj)
     vim.schedule(function()
-      echoraw(obj.stdout)
+      echoraw(obj.stdout, start_row, start_column)
     end)
   end)
 end
@@ -53,7 +84,7 @@ function M.setup_autocommands()
   local group = vim.api.nvim_create_augroup('NeoImg', { clear = true })
 
   if config.auto_open then
-    vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
+    vim.api.nvim_create_autocmd({ "BufRead" }, {
       group = group,
       pattern = "*",
       callback = function()
@@ -61,7 +92,8 @@ function M.setup_autocommands()
         local ext = get_extension(filepath)
 
         if ext and config.supported_extensions[ext:lower()] then
-          display_image(filepath)
+          local win = vim.api.nvim_get_current_win()
+          display_image(filepath, win)
         end
       end
     })
@@ -86,11 +118,7 @@ function M.setup_autocommands()
                   local ext = get_extension(filepath)
 
                   if ext and config.supported_extensions[ext:lower()] then
-                    local buf_id = vim.api.nvim_win_get_buf(win)
-                    vim.api.nvim_win_call(win, function()
-                      vim.api.nvim_buf_set_option(buf_id, 'modified', false)
-                      display_image(filepath)
-                    end)
+                    display_image(filepath, win)
                   end
                 end
                 break
