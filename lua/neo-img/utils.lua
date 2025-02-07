@@ -1,24 +1,42 @@
 local M = {}
 local config = require('neo-img.config').get()
 
+local function clear_window_region(win_id)
+  local win_pos = vim.api.nvim_win_get_position(win_id)
+  local win_height = vim.api.nvim_win_get_height(win_id)
+  local win_width = vim.api.nvim_win_get_width(win_id)
+
+  local start_row = win_pos[1] + 1
+  local start_col = win_pos[2] + 1
+
+  vim.api.nvim_win_call(win_id, function()
+    -- Save cursor and attributes
+    io.write("\027[s")  -- Save cursor
+    io.write("\027[0m") -- Reset attributes
+
+    -- Clear with default background
+    local empty_line = string.rep(" ", win_width)
+    for i = 0, win_height - 1 do
+      io.write(string.format("\027[%d;%dH%s", start_row + i, start_col, empty_line))
+    end
+
+    io.write("\027[u") -- Restore cursor
+    io.flush()
+  end)
+end
+
 local get_dims = function(win)
-  local bias     = 1
-
   local row, col = unpack(vim.api.nvim_win_get_position(win))
-  local width    = vim.api.nvim_win_get_width(win)
-
-  if col == 0 then
-    bias = 0.8
+  local size     = config.size.main
+  local offset   = config.offset.main
+  if col ~= 0 then
+    size = config.size.oil
+    offset = config.offset.oil
   end
 
-  local col_w        = config.size / (width + col)
-  local img_w        = col_w * width * bias
-  local img_ratio    = 16 / 9
-
   local start_row    = row + 3
-  local column_bias  = col + (width / img_ratio / 4 / bias)
-  local start_column = math.floor(column_bias)
-  return img_w, start_row, start_column
+  local start_column = col
+  return size, offset, start_row, start_column
 end
 
 local echoraw = function(str, start_row, start_column)
@@ -32,14 +50,8 @@ local get_extension = function(filename)
   return filename:match("^.+%.(.+)$")
 end
 
-local function build_command(filepath, image_width)
-  if config.backend == "kitty" then
-    return { "kitty", "+kitten", "icat", filepath }
-  elseif config.backend == "wezterm" then
-    return { "wezterm", "imgcat", filepath }
-  elseif config.backend == "magick" then
-    return { "magick", filepath, "-resize", image_width, "sixel:-" }
-  end
+local function build_command(filepath, size, offset)
+  return { "viu", filepath, "-w", size, "-x", offset }
 end
 
 local display_image = function(filepath, win)
@@ -48,7 +60,7 @@ local display_image = function(filepath, win)
     return
   end
 
-  local image_width, start_row, start_column = get_dims(win)
+  local size, offset, start_row, start_column = get_dims(win)
 
   -- new buffer so gibbrish won't show and remove the echo
   vim.api.nvim_win_call(win, function()
@@ -63,24 +75,24 @@ local display_image = function(filepath, win)
     end
 
     local augroup = vim.api.nvim_create_augroup("MyBufferGroup", { clear = true })
-    vim.api.nvim_create_autocmd({ "BufDelete", "BufHidden", "BufUnload" }, {
+    vim.api.nvim_create_autocmd({ "WinScrolled", "BufHidden", "BufUnload" }, {
       buffer = buf,
       group = augroup,
       once = true,
       callback = function()
-        vim.api.nvim_command('mode')
+        clear_window_region(win)
       end,
     })
   end)
 
-  vim.api.nvim_command('mode')
-  local command = build_command(filepath, image_width)
+  local command = build_command(filepath, size, offset)
   vim.system(command, {}, function(obj)
     vim.schedule(function()
       echoraw(obj.stdout, start_row, start_column)
     end)
   end)
 end
+
 
 function M.setup_autocommands()
   local group = vim.api.nvim_create_augroup('NeoImg', { clear = true })
