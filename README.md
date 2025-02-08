@@ -2,14 +2,17 @@
 A Neovim plugin for viewing images in the terminal.  
 
 ## Demo  
-https://github.com/user-attachments/assets/d784b594-4b4a-406b-94c5-0ebffd820c57
 
+https://github.com/user-attachments/assets/f7c76789-d57f-437c-b4da-444eebb7eb20
 
 ## Features
 - Automatically preview supported image files
 - Oil.nvim preview support
 
-## Installation
+## Installation  
+
+> requires [ttyimg](https://github.com/Skardyy/ttyimg)  
+> you can install it by doing `go install github.com/Skardyy/ttyimg`
 
 Using lazy.nvim:
 ```lua
@@ -49,6 +52,6 @@ require('neo-img').setup({
 })
 ```
 
-> adjust the offset and size to match your screen
-> default config is likely to not look good on your screen
-> also sixel support is experimental, it may be slow and look worser then the other options
+> adjust the offset and size to match your screen  
+> default config is likely to not look good on your screen  
+> also sixel support is experimental, it may be slow and look worser then the other options  
