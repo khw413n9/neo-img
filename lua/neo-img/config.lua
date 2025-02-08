@@ -12,12 +12,12 @@ M.defaults = {
   oil_preview = true, -- changes oil preview of images too
   backend = "auto",   -- auto detect: kitty / iterm / sixel
   size = {            --scales the width, will maintain aspect ratio
-    oil = 800,
-    main = 1600
+    oil = 400,
+    main = 800
   },
   offset = { -- only x offset
-    oil = 8,
-    main = 15
+    oil = 5,
+    main = 10
   }
 }
 
