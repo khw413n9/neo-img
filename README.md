@@ -12,7 +12,8 @@ https://github.com/user-attachments/assets/f7c76789-d57f-437c-b4da-444eebb7eb20
 ## Installation  
 
 > requires [ttyimg](https://github.com/Skardyy/ttyimg)  
-> you can install it by doing `go install github.com/Skardyy/ttyimg`
+> you can install it by doing `go install github.com/Skardyy/ttyimg`  
+> make sure GOPATH is in your path `export PATH="$HOME/go/bin:$PATH`  
 
 Using lazy.nvim:
 ```lua
