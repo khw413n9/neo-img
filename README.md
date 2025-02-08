@@ -52,6 +52,7 @@ require('neo-img').setup({
 })
 ```
 
+> [!Important]
 > adjust the offset and size to match your screen  
 > default config is likely to not look good on your screen  
 > also sixel support is experimental, it may be slow and look worser then the other options  
