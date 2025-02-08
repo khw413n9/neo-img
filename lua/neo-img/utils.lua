@@ -86,11 +86,18 @@ local display_image = function(filepath, win)
   end)
 
   local command = build_command(filepath, size, offset)
-  vim.system(command, {}, function(obj)
-    vim.schedule(function()
-      echoraw(obj.stdout, start_row, start_column)
-    end)
-  end)
+
+  vim.fn.jobstart(command, {
+    on_stdout = function(_, data)
+      if data then
+        local output = table.concat(data, "\n")
+        vim.schedule(function()
+          echoraw(output, start_row, start_column)
+        end)
+      end
+    end,
+    stdout_buffered = true
+  })
 end
 
 
