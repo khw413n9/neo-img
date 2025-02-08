@@ -1,28 +1,8 @@
 local M = {}
 local config = require('neo-img.config').get()
 
-local function clear_window_region(win_id)
-  local win_pos = vim.api.nvim_win_get_position(win_id)
-  local win_height = vim.api.nvim_win_get_height(win_id)
-  local win_width = vim.api.nvim_win_get_width(win_id)
-
-  local start_row = win_pos[1] + 1
-  local start_col = win_pos[2] + 1
-
-  vim.api.nvim_win_call(win_id, function()
-    -- Save cursor and attributes
-    io.write("\027[s")  -- Save cursor
-    io.write("\027[0m") -- Reset attributes
-
-    -- Clear with default background
-    local empty_line = string.rep(" ", win_width)
-    for i = 0, win_height - 1 do
-      io.write(string.format("\027[%d;%dH%s", start_row + i, start_col, empty_line))
-    end
-
-    io.write("\027[u") -- Restore cursor
-    io.flush()
-  end)
+local function clear_window_region()
+  vim.api.nvim_command('mode')
 end
 
 local get_dims = function(win)
@@ -85,7 +65,7 @@ local display_image = function(filepath, win)
       group = augroup,
       once = true,
       callback = function()
-        clear_window_region(win)
+        clear_window_region()
       end,
     })
   end)
