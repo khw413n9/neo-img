@@ -16,7 +16,7 @@ local get_dims = function(win)
 
   local start_row    = row + 3
   local start_column = col + offset
-  return size, offset, start_row, start_column
+  return size, start_row, start_column
 end
 
 local echoraw = function(str, start_row, start_column)
@@ -45,7 +45,7 @@ local display_image = function(filepath, win)
     return
   end
 
-  local size, offset, start_row, start_column = get_dims(win)
+  local size, start_row, start_column = get_dims(win)
 
   -- new buffer so gibbrish won't show and remove the echo
   vim.api.nvim_win_call(win, function()
