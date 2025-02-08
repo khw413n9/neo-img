@@ -10,13 +10,14 @@ M.defaults = {
   },
   auto_open = true,   -- Automatically open images when buffer is loaded
   oil_preview = true, -- changes oil preview of images too
+  backend = "auto",   -- auto detect: kitty / iterm / sixel
   size = {            --scales the width, will maintain aspect ratio
-    oil = 70,
-    main = 130
+    oil = 800,
+    main = 1600
   },
   offset = { -- only x offset
-    oil = 10,
-    main = 20
+    oil = 8,
+    main = 15
   }
 }
 

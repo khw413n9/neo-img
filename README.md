@@ -36,8 +36,19 @@ require('neo-img').setup({
         ['webp'] = true
     },
     auto_open = true,   -- Automatically open images when buffer is loaded
-    oil_preview = true, -- Oil preview support
-    backend = "magick", -- magick / kitty (requires intalling magick or using a terminal that supports kitty graphic protocol)
-    size = 1300, -- the max size that the screen can render without scrolling (does calculation based on that, run the magick or kitty command with resize to test the max size)
+    oil_preview = true, -- changes oil preview of images too
+    backend = "auto",   -- kitty / iterm / sixel / auto (auto detects what is supported in your terminal)
+    size = {            --scales the width, will maintain aspect ratio
+      oil = 800,
+      main = 1600
+    },
+    offset = { -- only x offset
+      oil = 8,
+      main = 15
+    }
 })
 ```
+
+> adjust the offset and size to match your screen
+> default config is likely to not look good on your screen
+> also sixel support is experimental, it may be slow and look worser then the other options

@@ -35,7 +35,7 @@ local get_dims = function(win)
   end
 
   local start_row    = row + 3
-  local start_column = col
+  local start_column = col + offset
   return size, offset, start_row, start_column
 end
 
@@ -50,8 +50,13 @@ local get_extension = function(filename)
   return filename:match("^.+%.(.+)$")
 end
 
-local function build_command(filepath, size, offset)
-  return { "viu", filepath, "-w", size, "-x", offset }
+local function build_command(filepath, size)
+  local valid_configs = { iterm = true, kitty = true, sixel = true }
+  if valid_configs[config.backend] then
+    return { "ttyimg", "-w", size, '-f', 'sixel', "-p", config.backend, filepath }
+  else
+    return { "ttyimg", "-w", size, '-f', 'sixel', filepath }
+  end
 end
 
 local display_image = function(filepath, win)
@@ -85,7 +90,7 @@ local display_image = function(filepath, win)
     })
   end)
 
-  local command = build_command(filepath, size, offset)
+  local command = build_command(filepath, size)
 
   vim.fn.jobstart(command, {
     on_stdout = function(_, data)
