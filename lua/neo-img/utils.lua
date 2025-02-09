@@ -8,19 +8,44 @@ local function check_ttyimg()
   return vim.fn.executable("ttyimg") == 1 -- 1 means executable, 0 means not
 end
 
+local function get_max_rows()
+  return vim.o.lines - vim.o.cmdheight - 1
+end
+
 local get_dims = function(win)
   local config   = require('neo-img.config').get()
   local row, col = unpack(vim.api.nvim_win_get_position(win))
-  local size     = config.size.main
-  local offset   = config.offset.main
-  if col ~= 0 then
-    size = config.size.oil
-    offset = config.offset.oil
+
+  local max_rows = get_max_rows()
+  local max_cols = vim.o.columns
+  local min_rows = vim.api.nvim_win_get_height(win) -- Rows in the current window
+  local min_cols = vim.api.nvim_win_get_width(win)  -- Columns in the current window
+  vim.notify(win)
+  local width_factor  = min_cols / max_cols
+  local height_factor = min_rows / max_rows
+  if config.size_isnumber then
+    if width_factor < height_factor then
+      height_factor = width_factor
+    elseif height_factor < width_factor then
+      width_factor = height_factor
+    end
   end
 
-  local start_row    = row + offset.y
-  local start_column = col + offset.x
-  return size, start_row, start_column
+  local new_size     = {
+    x = config.size.x * width_factor,
+    y = config.size.y * height_factor
+  }
+  local yoffset      = math.floor(config.offset.y * height_factor)
+  yoffset            = yoffset > 3 and yoffset or 3
+  local new_offset   = {
+    x = math.floor(config.offset.x * width_factor),
+    y = yoffset
+  }
+
+  local start_row    = row + new_offset.y
+  local start_column = col + new_offset.x
+  vim.notify(new_size.x .. " " .. new_size.y)
+  return new_size, start_row, start_column
 end
 
 local echoraw = function(str, start_row, start_column)
@@ -75,8 +100,19 @@ local display_image = function(filepath, win)
       buffer = buf,
       group = augroup,
       once = true,
-      callback = function()
+      callback = function(ev)
+        vim.notify(ev.buf)
         clear_window_region()
+      end,
+    })
+    vim.api.nvim_create_autocmd({ "BufWinLeave" }, {
+      group = augroup,
+      once = true,
+      callback = function(ev)
+        vim.notify(ev.buf .. " vs " .. buf)
+        if ev.buf == buf then
+          clear_window_region()
+        end
       end,
     })
   end)
