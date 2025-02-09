@@ -12,7 +12,7 @@ https://github.com/user-attachments/assets/f7c76789-d57f-437c-b4da-444eebb7eb20
 ## Installation  
 
 > requires [ttyimg](https://github.com/Skardyy/ttyimg)  
-> you can install it by doing `go install github.com/Skardyy/ttyimg`  
+> you can install it by doing `go install github.com/Skardyy/ttyimg@latest`  
 > make sure GOPATH is in your path `export PATH="$HOME/go/bin:$PATH`  
 
 Using lazy.nvim:
@@ -32,24 +32,26 @@ return {
 ## Configuration
 ```lua
 require('neo-img').setup({
-    supported_extensions = {
-        ['png'] = true,
-        ['jpg'] = true,
-        ['jpeg'] = true,
-        ['gif'] = true,
-        ['webp'] = true
-    },
-    auto_open = true,   -- Automatically open images when buffer is loaded
-    oil_preview = true, -- changes oil preview of images too
-    backend = "auto",   -- kitty / iterm / sixel / auto (auto detects what is supported in your terminal)
-    size = {            --scales the width, will maintain aspect ratio
-      oil = 400,
-      main = 800
-    },
-    offset = { -- only x offset
-      oil = 5,
-      main = 10
-    }
+  supported_extensions = {
+    ['png'] = true,
+    ['jpg'] = true,
+    ['jpeg'] = true,
+    ['webp'] = true,
+    ['svg'] = true,
+    ['tiff'] = true
+  },
+  auto_open = true,             -- Automatically open images when buffer is loaded
+  oil_preview = true,           -- changes oil preview of images too
+  backend = "auto",             -- auto detect: kitty / iterm / sixel
+  size = {                      --scales the width, will maintain aspect ratio
+    oil = { x = 400, y = 400 }, -- a number (oil = 400) will set both at once
+    main = { x = 800, y = 800 }
+  },
+  offset = {
+    oil = { x = 5, y = 3 }, -- a number will only change the x
+    main = { x = 10, y = 3 }
+  },
+  resizeMode = "Fit" -- Fit / Strech / Crop
 })
 ```
 

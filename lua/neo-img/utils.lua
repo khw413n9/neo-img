@@ -5,6 +5,10 @@ local function clear_window_region()
   vim.api.nvim_command('mode')
 end
 
+local function check_ttyimg()
+  return vim.fn.executable("ttyimg") == 1 -- 1 means executable, 0 means not
+end
+
 local get_dims = function(win)
   local row, col = unpack(vim.api.nvim_win_get_position(win))
   local size     = config.size.main
@@ -14,8 +18,8 @@ local get_dims = function(win)
     offset = config.offset.oil
   end
 
-  local start_row    = row + 3
-  local start_column = col + offset
+  local start_row    = row + offset.y
+  local start_column = col + offset.x
   return size, start_row, start_column
 end
 
@@ -32,14 +36,21 @@ end
 
 local function build_command(filepath, size)
   local valid_configs = { iterm = true, kitty = true, sixel = true }
+  -- add the resize mod -m
+  -- and add the format mode, maybe going to need to bundle it to make that work
   if valid_configs[config.backend] then
-    return { "ttyimg", "-w", size, '-f', 'sixel', "-p", config.backend, filepath }
+    return { "ttyimg", "-w", size.x, "-h", size.y, '-f', 'sixel', "-p", config.backend, filepath }
   else
-    return { "ttyimg", "-w", size, '-f', 'sixel', filepath }
+    return { "ttyimg", "-w", size.x, "-h", size.y, '-f', 'sixel', filepath }
   end
 end
 
 local display_image = function(filepath, win)
+  if not check_ttyimg() then
+    vim.notify("ttyimg isn't installed, can't show img")
+    return
+  end
+
   if vim.fn.filereadable(filepath) == 0 then
     vim.notify("File not found: " .. filepath, vim.log.levels.ERROR)
     return
