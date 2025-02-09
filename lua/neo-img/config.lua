@@ -25,55 +25,65 @@ M.defaults = {
 
 local config = M.defaults
 
+local function setup_plugin()
+  local plugin_name = "neo-img"
 
-local function build_ttyimg()
-  local go_dir = vim.fn.stdpath("config") .. "/ttyimg" -- Path to the submodule
-  config.binary_path = go_dir .. "/ttyimg"             -- Path to the binary
-
-  -- Run `go build` to compile the binary
-  local result = vim.system({
-    "go", "build", "-o", config.binary_path
-  }, { cwd = go_dir }):wait()
-
-  if result.code ~= 0 then
-    error("Failed to build ttyimg: " .. result.stderr)
+  local plugin_dir
+  local isPacker = pcall(require, "packer")
+  local isLazy = pcall(require, "lazy")
+  if isPacker then
+    plugin_dir = vim.fn.stdpath("data") .. "/site/pack/packer/start/" .. plugin_name
+  elseif isLazy then
+    plugin_dir = vim.fn.stdpath("data") .. "/lazy/" .. plugin_name
+  else
+    vim.notify(
+      "No plugin manager detected! Please build ttyimg manually",
+      vim.log.levels.ERROR
+    )
+    return nil
   end
 
-  print("Successfully built ttyimg!")
-end
+  local go_dir = plugin_dir .. "/ttyimg"
+  local binary_path = go_dir .. "/ttyimg"
 
-local function setup_plugin()
-  if pcall(require, "packer") then
-    -- Configure for packer.nvim
+  local function build_ttyimg()
+    local result = vim.system({
+      "go", "build", "-o", binary_path
+    }, { cwd = go_dir }):wait()
+
+    if result.code ~= 0 then
+      error("Failed to build ttyimg: " .. result.stderr)
+    end
+
+    print("Successfully built ttyimg!")
+  end
+
+  -- Setup for packer.nvim
+  if isPacker then
     require("packer").startup(function(use)
       use({
-        "skardyy/neo-img",
-        run = function()
-          build_ttyimg()
-        end,
+        "Skardyy/" .. plugin_name,
+        run = build_ttyimg,
       })
     end)
-  elseif pcall(require, "lazy") then
-    -- Configure for lazy.nvim
+  end
+
+  -- Setup for lazy.nvim
+  if isLazy then
     require("lazy").setup({
       {
-        "skardyy/neo-img",
-        build = function()
-          build_ttyimg()
-        end,
+        "Skardyy/" .. plugin_name,
+        build = build_ttyimg,
       },
     })
-  else
-    -- No plugin manager detected
-    vim.notify(
-      "No plugin manager detected! Please run `go install github.com/Skardyy/ttyimg@latest`.",
-      vim.log.levels.WARN
-    )
   end
+
+  -- Return the binary path
+  return binary_path
 end
 
 function M.setup(opts)
-  setup_plugin()
+  config.bin_path = setup_plugin()
   -- Normalize size options before merging
   if opts and opts.size then
     for k, v in pairs(opts.size) do

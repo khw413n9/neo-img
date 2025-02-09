@@ -39,9 +39,9 @@ local function build_command(filepath, size)
   -- add the resize mod -m
   -- and add the format mode, maybe going to need to bundle it to make that work
   if valid_configs[config.backend] then
-    return { config.binary_path, "-w", size.x, "-h", size.y, '-f', 'sixel', "-p", config.backend, filepath }
+    return { config.bin_path, "-w", size.x, "-h", size.y, '-f', 'sixel', "-p", config.backend, filepath }
   else
-    return { config.binary_path, "-w", size.x, "-h", size.y, '-f', 'sixel', filepath }
+    return { config.bin_path, "-w", size.x, "-h", size.y, '-f', 'sixel', filepath }
   end
 end
 
