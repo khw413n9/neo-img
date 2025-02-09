@@ -1,5 +1,4 @@
 local M = {}
-local config = require('neo-img.config').get()
 
 local function clear_window_region()
   vim.api.nvim_command('mode')
@@ -10,6 +9,7 @@ local function check_ttyimg()
 end
 
 local get_dims = function(win)
+  local config   = require('neo-img.config').get()
   local row, col = unpack(vim.api.nvim_win_get_position(win))
   local size     = config.size.main
   local offset   = config.offset.main
@@ -35,13 +35,13 @@ local get_extension = function(filename)
 end
 
 local function build_command(filepath, size)
+  local config = require('neo-img.config').get()
   local valid_configs = { iterm = true, kitty = true, sixel = true }
-  -- add the resize mod -m
-  -- and add the format mode, maybe going to need to bundle it to make that work
   if valid_configs[config.backend] then
-    return { config.bin_path, "-w", size.x, "-h", size.y, '-f', 'sixel', "-p", config.backend, filepath }
+    return { config.bin_path, "-m", config.resizeMode, "-w", size.x, "-h", size.y, '-f', 'sixel', "-p", config.backend,
+      filepath }
   else
-    return { config.bin_path, "-w", size.x, "-h", size.y, '-f', 'sixel', filepath }
+    return { config.bin_path, "-m", config.resizeMode, "-w", size.x, "-h", size.y, '-f', 'sixel', filepath }
   end
 end
 
@@ -98,6 +98,7 @@ end
 
 
 function M.setup_autocommands()
+  local config = require('neo-img.config').get()
   local group = vim.api.nvim_create_augroup('NeoImg', { clear = true })
 
   if config.auto_open then

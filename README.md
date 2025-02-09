@@ -1,15 +1,15 @@
-# neo-img  
+# neo-img 🖼️  
 A Neovim plugin for viewing images in the terminal.  
 
-## Demo  
+## Demo 🎬  
 
 https://github.com/user-attachments/assets/f7c76789-d57f-437c-b4da-444eebb7eb20
 
-## Features
+## Features ✨  
 - Automatically preview supported image files
 - Oil.nvim preview support
 
-## Installation  
+## Installation 🚀  
 
 > uses [ttyimg](https://github.com/Skardyy/ttyimg)  
 > the plugin will bundle it, just make sure to add the `build = "cd ttyimg && go build"`  
@@ -29,11 +29,11 @@ return {
 }
 ```
 
-## Usage
+## Usage 💼  
 - Images will automatically preview when opening supported files
 - Use `:NeoImgShow` to manually display the current file
 
-## Configuration
+## Configuration ⚙️  
 ```lua
 require('neo-img').setup({
   supported_extensions = {
