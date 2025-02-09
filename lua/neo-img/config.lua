@@ -25,65 +25,42 @@ M.defaults = {
 
 local config = M.defaults
 
-local function setup_plugin()
+local function get_bin_path()
   local plugin_name = "neo-img"
 
-  local plugin_dir
-  local isPacker = pcall(require, "packer")
-  local isLazy = pcall(require, "lazy")
-  if isPacker then
-    plugin_dir = vim.fn.stdpath("data") .. "/site/pack/packer/start/" .. plugin_name
-  elseif isLazy then
-    plugin_dir = vim.fn.stdpath("data") .. "/lazy/" .. plugin_name
+  local function check_bin(bin_path)
+    return vim.fn.filereadable(bin_path) == 1
+  end
+
+  local data_dir = vim.fn.stdpath("data")
+  if pcall(require, "lazy") then
+    local bin_path = data_dir .. "/lazy/" .. plugin_name .. "/ttyimg"
+    if check_bin(bin_path) then
+      return bin_path
+    end
+  end
+  if pcall(require, "packer") then
+    local bin_path = data_dir .. "/site/pack/packer/start/" .. plugin_name .. "/ttyimg"
+    if check_bin(bin_path) then
+      return bin_path
+    end
+  end
+  local global_binary = vim.fn.exepath("ttyimg")
+  vim.notify("here")
+  print("here")
+  if global_binary ~= "" then
+    return global_binary
   else
     vim.notify(
-      "No plugin manager detected! Please build ttyimg manually",
+      "No plugin manager detected and ttyimg is not installed globally. Please install ttyimg manually.",
       vim.log.levels.ERROR
     )
-    return nil
+    return ""
   end
-
-  local go_dir = plugin_dir .. "/ttyimg"
-  local binary_path = go_dir .. "/ttyimg"
-
-  local function build_ttyimg()
-    local result = vim.system({
-      "go", "build", "-o", binary_path
-    }, { cwd = go_dir }):wait()
-
-    if result.code ~= 0 then
-      error("Failed to build ttyimg: " .. result.stderr)
-    end
-
-    print("Successfully built ttyimg!")
-  end
-
-  -- Setup for packer.nvim
-  if isPacker then
-    require("packer").startup(function(use)
-      use({
-        "Skardyy/" .. plugin_name,
-        run = build_ttyimg,
-      })
-    end)
-  end
-
-  -- Setup for lazy.nvim
-  if isLazy then
-    require("lazy").setup({
-      {
-        "Skardyy/" .. plugin_name,
-        build = build_ttyimg,
-      },
-    })
-  end
-
-  -- Return the binary path
-  return binary_path
 end
 
 function M.setup(opts)
-  config.bin_path = setup_plugin()
+  config.bin_path = get_bin_path()
   -- Normalize size options before merging
   if opts and opts.size then
     for k, v in pairs(opts.size) do
