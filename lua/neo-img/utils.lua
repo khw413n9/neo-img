@@ -13,14 +13,13 @@ local function get_max_rows()
 end
 
 local get_dims = function(win)
-  local config   = require('neo-img.config').get()
-  local row, col = unpack(vim.api.nvim_win_get_position(win))
+  local config        = require('neo-img.config').get()
+  local row, col      = unpack(vim.api.nvim_win_get_position(win))
 
-  local max_rows = get_max_rows()
-  local max_cols = vim.o.columns
-  local min_rows = vim.api.nvim_win_get_height(win) -- Rows in the current window
-  local min_cols = vim.api.nvim_win_get_width(win)  -- Columns in the current window
-  vim.notify(win)
+  local max_rows      = get_max_rows()
+  local max_cols      = vim.o.columns
+  local min_rows      = vim.api.nvim_win_get_height(win) -- Rows in the current window
+  local min_cols      = vim.api.nvim_win_get_width(win)  -- Columns in the current window
   local width_factor  = min_cols / max_cols
   local height_factor = min_rows / max_rows
   if config.size_isnumber then
@@ -44,7 +43,6 @@ local get_dims = function(win)
 
   local start_row    = row + new_offset.y
   local start_column = col + new_offset.x
-  vim.notify(new_size.x .. " " .. new_size.y)
   return new_size, start_row, start_column
 end
 
@@ -71,7 +69,8 @@ local function build_command(filepath, size)
 end
 
 local display_image = function(filepath, win)
-  if not check_ttyimg() then
+  local config = require('neo-img.config').get()
+  if config.bin_path == "" then
     vim.notify("ttyimg isn't installed, can't show img")
     return
   end
@@ -100,19 +99,8 @@ local display_image = function(filepath, win)
       buffer = buf,
       group = augroup,
       once = true,
-      callback = function(ev)
-        vim.notify(ev.buf)
+      callback = function()
         clear_window_region()
-      end,
-    })
-    vim.api.nvim_create_autocmd({ "BufWinLeave" }, {
-      group = augroup,
-      once = true,
-      callback = function(ev)
-        vim.notify(ev.buf .. " vs " .. buf)
-        if ev.buf == buf then
-          clear_window_region()
-        end
       end,
     })
   end)
