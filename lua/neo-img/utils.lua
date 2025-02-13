@@ -4,10 +4,6 @@ local function clear_window_region()
   vim.api.nvim_command('mode')
 end
 
-local function check_ttyimg()
-  return vim.fn.executable("ttyimg") == 1 -- 1 means executable, 0 means not
-end
-
 local function get_max_rows()
   return vim.o.lines - vim.o.cmdheight - 1
 end
@@ -31,8 +27,8 @@ local get_dims = function(win)
   end
 
   local new_size     = {
-    x = config.size.x * width_factor,
-    y = config.size.y * height_factor
+    x = math.floor(config.size.x * width_factor),
+    y = math.floor(config.size.y * height_factor)
   }
   local yoffset      = math.floor(config.offset.y * height_factor)
   yoffset            = yoffset > 3 and yoffset or 3
