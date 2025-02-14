@@ -6,6 +6,7 @@ local function setup_main(config)
   vim.api.nvim_create_autocmd({ "BufWinEnter" }, {
     pattern = "*",
     callback = function(ev)
+      Image.StopJob()
       vim.defer_fn(function()
         local filepath = vim.api.nvim_buf_get_name(ev.buf)
         if filepath == "" then
@@ -13,7 +14,6 @@ local function setup_main(config)
         end
         local ext = utils.get_extension(filepath)
 
-        Image.StopJob()
         if ext and config.supported_extensions[ext:lower()] then
           local win = vim.fn.bufwinid(ev.buf)
           utils.display_image(filepath, win)
