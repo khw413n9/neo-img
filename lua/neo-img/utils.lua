@@ -64,43 +64,29 @@ local function build_command(filepath, size)
   end
 end
 
-local display_image = function(filepath, win)
+local display_image = function(filepath, buf)
   local config = require('neo-img.config').get()
+  local win = vim.fn.win_findbuf(buf)[1]
+
   if config.bin_path == "" then
     vim.notify("ttyimg isn't installed, can't show img")
     return
   end
-
   if vim.fn.filereadable(filepath) == 0 then
     vim.notify("File not found: " .. filepath, vim.log.levels.ERROR)
     return
   end
 
-  local size, start_row, start_column = get_dims(win)
-
-  -- new buffer so gibbrish won't show and remove the echo
-  vim.api.nvim_win_call(win, function()
-    local buf = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_buf_set_option(buf, "modifiable", false)
-    vim.api.nvim_set_current_buf(buf)
-
-    -- delete usless buf
-    local prev_buf = vim.fn.bufnr('#')
-    if prev_buf ~= -1 then
-      vim.api.nvim_buf_delete(prev_buf, { force = true })
+  vim.api.nvim_create_autocmd({ "BufWinLeave", "BufWipeout" }, {
+    buffer = buf,
+    once = true,
+    callback = function()
+      clear_window_region()
+      vim.notify("cleared")
     end
+  })
 
-    local augroup = vim.api.nvim_create_augroup("MyBufferGroup", { clear = true })
-    vim.api.nvim_create_autocmd({ "WinScrolled", "BufHidden", "BufUnload" }, {
-      buffer = buf,
-      group = augroup,
-      once = true,
-      callback = function()
-        clear_window_region()
-      end,
-    })
-  end)
-
+  local size, start_row, start_column = get_dims(win)
   local command = build_command(filepath, size)
 
   vim.fn.jobstart(command, {
@@ -119,53 +105,20 @@ end
 
 function M.setup_autocommands()
   local config = require('neo-img.config').get()
-  local group = vim.api.nvim_create_augroup('NeoImg', { clear = true })
 
   if config.auto_open then
-    vim.api.nvim_create_autocmd({ "BufRead" }, {
-      group = group,
+    vim.api.nvim_create_autocmd({ "BufWinEnter" }, {
       pattern = "*",
-      callback = function()
-        local filepath = vim.fn.expand('%:p')
+      callback = function(ev)
+        local filepath = vim.api.nvim_buf_get_name(ev.buf)
         local ext = get_extension(filepath)
 
         if ext and config.supported_extensions[ext:lower()] then
-          local win = vim.api.nvim_get_current_win()
-          display_image(filepath, win)
+          vim.notify("entered")
+          display_image(filepath, ev.buf)
         end
       end
     })
-
-    -- adding oil.nvim preview support.
-    -- maybe won't work if the user creates a new win manually, hence adding option to diable it
-    if config.oil_preview then
-      vim.api.nvim_create_autocmd("BufEnter", {
-        pattern = "oil://*",
-        callback = function()
-          local wins = vim.api.nvim_list_wins()
-          local active_win = vim.api.nvim_get_current_win()
-
-          if #wins > 1 then
-            for _, win in ipairs(wins) do
-              if win ~= active_win then
-                local oil = require("oil")
-                local entry = oil.get_cursor_entry()
-                local dir = oil.get_current_dir()
-                if entry ~= nil then
-                  local filepath = dir .. entry.parsed_name
-                  local ext = get_extension(filepath)
-
-                  if ext and config.supported_extensions[ext:lower()] then
-                    display_image(filepath, win)
-                  end
-                end
-                break
-              end
-            end
-          end
-        end,
-      })
-    end
   end
 
   -- Add command to manually trigger image display
