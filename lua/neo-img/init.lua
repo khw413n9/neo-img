@@ -9,6 +9,11 @@ function M.setup(opts)
 end
 
 function M.install()
+  local bin_name = "ttyimg"
+  local config_dir = debug.getinfo(1).source:sub(2)
+  local _, end_idx = config_dir:find("neo%-img")
+  local target_dir = config_dir:sub(1, end_idx) .. "/" .. bin_name
+
   local uname = vim.loop.os_uname()
   local os, arch = uname.sysname:lower(), uname.machine
 
@@ -40,11 +45,13 @@ function M.install()
 
   -- Build file name
   local filename = "ttyimg-" .. os .. "-" .. arch
-  if os == "windows" then filename = filename .. ".exe" end
+  if os == "windows" then
+    filename = filename .. ".exe"
+  end
 
   -- Download URL
   local url = "https://github.com/Skardyy/ttyimg/releases/latest/download/" .. filename
-  local output_path = "ttyimg/ttyimg" .. (os == "windows" and ".exe" or "")
+  local output_path = target_dir .. "/ttyimg" .. (os == "windows" and ".exe" or "")
 
   -- Check if curl or wget is available
   local function is_command_available(cmd)
@@ -62,14 +69,26 @@ function M.install()
   end
 
   -- Run the download command
-  local handle = vim.loop.spawn(downloader[1], { args = { unpack(downloader, 2) } }, function(code)
+  local handle = vim.loop.spawn(downloader[1], { args = { unpack(downloader, 2) } }, function(code, signal)
     if code == 0 then
+      print("Downloaded ttyimg successfully to " .. output_path)
+
+      -- Perform chmod to make the binary executable (only for non-Windows systems)
       if os ~= "windows" then
-        vim.loop.spawn("chmod", { args = { "+x", output_path } })
+        local chmod_handle = vim.loop.spawn("chmod", { args = { "+x", output_path } }, function(chmod_code)
+          if chmod_code == 0 then
+            print("Set executable permissions for " .. output_path)
+          else
+            print("Failed to set executable permissions for " .. output_path)
+          end
+        end)
+
+        if not chmod_handle then
+          print("Failed to start chmod process.")
+        end
       end
-      print("Downloaded ttyimg successfully!")
     else
-      print("Failed to download ttyimg.")
+      print("Failed to download ttyimg. Exit code: " .. code .. ", Signal: " .. signal)
     end
   end)
 

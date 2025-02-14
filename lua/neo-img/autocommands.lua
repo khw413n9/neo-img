@@ -24,6 +24,10 @@ local function setup_main(config)
 end
 
 local function setup_api()
+  vim.api.nvim_create_user_command('InstallTtyimg', function()
+    print("Installing Ttyimg...")
+    require("neo-img").install()
+  end, {})
 end
 
 function M:setup()
