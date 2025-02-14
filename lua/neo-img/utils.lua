@@ -1,18 +1,15 @@
 local M = {}
+local Image = require("neo-img.image")
 
-local function clear_window_region()
-  vim.api.nvim_command('mode')
-end
-
-local function get_max_rows()
+function M.get_max_rows()
   return vim.o.lines - vim.o.cmdheight - 1
 end
 
-local get_dims = function(win)
+function M.get_dims(win)
   local config        = require('neo-img.config').get()
   local row, col      = unpack(vim.api.nvim_win_get_position(win))
 
-  local max_rows      = get_max_rows()
+  local max_rows      = M.get_max_rows()
   local max_cols      = vim.o.columns
   local min_rows      = vim.api.nvim_win_get_height(win) -- Rows in the current window
   local min_cols      = vim.api.nvim_win_get_width(win)  -- Columns in the current window
@@ -42,14 +39,7 @@ local get_dims = function(win)
   return new_size, start_row, start_column
 end
 
-local echoraw = function(str, start_row, start_column)
-  local move_cursor = string.format("\27[%d;%dH", start_row, start_column)
-  local full_str    = "\27[s" .. move_cursor .. str .. "\27[u"
-
-  vim.fn.chansend(vim.v.stderr, full_str)
-end
-
-local get_extension = function(filename)
+function M.get_extension(filename)
   return filename:match("^.+%.(.+)$")
 end
 
@@ -64,37 +54,48 @@ local function build_command(filepath, size)
   end
 end
 
-local display_image = function(filepath, buf)
+local function get_oil_buf()
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    local buf = vim.api.nvim_win_get_buf(win)
+    if vim.bo[buf].filetype == "oil" then
+      return buf
+    end
+  end
+  return nil
+end
+
+function M.display_image(filepath, win)
   local config = require('neo-img.config').get()
-  local win = vim.fn.win_findbuf(buf)[1]
 
   if config.bin_path == "" then
-    vim.notify("ttyimg isn't installed, can't show img")
+    vim.notify("ttyimg isn't installed, can't show img", vim.log.levels.ERROR)
     return
   end
+
   if vim.fn.filereadable(filepath) == 0 then
     vim.notify("File not found: " .. filepath, vim.log.levels.ERROR)
     return
   end
 
-  vim.api.nvim_create_autocmd({ "BufWinLeave", "BufWipeout" }, {
-    buffer = buf,
-    once = true,
-    callback = function()
-      clear_window_region()
-      vim.notify("cleared")
-    end
-  })
-
-  local size, start_row, start_column = get_dims(win)
+  local size, start_row, start_column = M.get_dims(win)
   local command = build_command(filepath, size)
 
-  vim.fn.jobstart(command, {
+  if Image.job ~= nil then
+    vim.fn.jobstop(Image.job)
+  end
+  Image.Delete()
+  Image.job = vim.fn.jobstart(command, {
     on_stdout = function(_, data)
       if data then
         local output = table.concat(data, "\n")
         vim.schedule(function()
-          echoraw(output, start_row, start_column)
+          if Image.job then
+            M.job = nil
+          end
+          local oil_win = get_oil_buf()
+          Image.Create(win, start_row, start_column, output, { oil_win }, filepath)
+          Image.Prepare()
+          Image.Draw()
         end)
       end
     end,
@@ -102,30 +103,14 @@ local display_image = function(filepath, buf)
   })
 end
 
-
-function M.setup_autocommands()
-  local config = require('neo-img.config').get()
-
-  if config.auto_open then
-    vim.api.nvim_create_autocmd({ "BufWinEnter" }, {
-      pattern = "*",
-      callback = function(ev)
-        local filepath = vim.api.nvim_buf_get_name(ev.buf)
-        local ext = get_extension(filepath)
-
-        if ext and config.supported_extensions[ext:lower()] then
-          vim.notify("entered")
-          display_image(filepath, ev.buf)
-        end
-      end
-    })
+function M.get_oil_filepath()
+  local oil = require("oil")
+  local entry = oil.get_cursor_entry()
+  local dir = oil.get_current_dir()
+  if entry ~= nil then
+    return dir .. entry.parsed_name
   end
-
-  -- Add command to manually trigger image display
-  vim.api.nvim_create_user_command('NeoImgShow', function()
-    local filepath = vim.fn.expand('%:p')
-    M.display_image(filepath)
-  end, {})
+  return ""
 end
 
 return M

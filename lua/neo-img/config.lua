@@ -17,11 +17,11 @@ M.defaults = {
   auto_open = true,   -- Automatically open images when buffer is loaded
   oil_preview = true, -- changes oil preview of images too
   backend = "auto",   -- auto / kitty / iterm / sixel
-  size = {            -- going to scale down based on the window to the entire screen, you can also pass size as a numebr and its going to set both that number (will scale them down together as well)
+  size = {
     x = 800,
     y = 800
   },
-  offset = { -- going to scale down based on the window to the entire screen, setting a number will default y to 3 and x to the number
+  offset = {
     x = 10,
     y = 3
   },
@@ -52,22 +52,6 @@ end
 
 function M.setup(opts)
   config.bin_path = get_bin_path()
-  -- Normalize size options before merging
-  config.size_isnumber = true
-  config.offset_isnumber = true
-  if opts and opts.size then
-    if type(opts.size) == 'number' then
-      opts.size = { x = opts.size, y = opts.size }
-      config.size_isnumber = true
-    end
-  end
-  -- Normalize offset options
-  if opts and opts.offset then
-    if type(opts.offset) == 'number' then
-      opts.offset = { x = opts.offset, y = M.defaults.offset.y }
-      config.offset_isnumber = true
-    end
-  end
   config = vim.tbl_deep_extend('force', M.defaults, opts or {})
 end
 

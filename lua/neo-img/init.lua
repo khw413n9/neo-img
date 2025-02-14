@@ -1,11 +1,11 @@
 local M = {}
 local config = require('neo-img.config')
-local utils = require("neo-img.utils")
+local autocmds = require("neo-img.autocommands")
 
 function M.setup(opts)
   opts = opts or {}
   config.setup(opts)
-  utils.setup_autocommands()
+  autocmds:setup()
 end
 
 return M
