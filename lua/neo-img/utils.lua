@@ -27,11 +27,9 @@ function M.get_dims(win)
     x = math.floor(config.size.x * width_factor),
     y = math.floor(config.size.y * height_factor)
   }
-  local yoffset      = math.floor(config.offset.y * height_factor)
-  yoffset            = yoffset > 3 and yoffset or 3
   local new_offset   = {
-    x = math.floor(config.offset.x * width_factor),
-    y = yoffset
+    x = math.floor(config.offset.x * width_factor + 0.5),
+    y = math.floor(config.offset.y * height_factor + 0.5)
   }
 
   local start_row    = row + new_offset.y
@@ -64,6 +62,16 @@ local function get_oil_buf()
   return nil
 end
 
+local function get_oil_win()
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    local buf = vim.api.nvim_win_get_buf(win)
+    if vim.bo[buf].filetype == "oil" then
+      return win
+    end
+  end
+  return nil
+end
+
 function M.display_image(filepath, win)
   local config = require('neo-img.config').get()
 
@@ -80,9 +88,6 @@ function M.display_image(filepath, win)
   local size, start_row, start_column = M.get_dims(win)
   local command = build_command(filepath, size)
 
-  if Image.job ~= nil then
-    vim.fn.jobstop(Image.job)
-  end
   Image.Delete()
   Image.job = vim.fn.jobstart(command, {
     on_stdout = function(_, data)
@@ -90,10 +95,10 @@ function M.display_image(filepath, win)
         local output = table.concat(data, "\n")
         vim.schedule(function()
           if Image.job then
-            M.job = nil
+            Image.job = nil
           end
-          local oil_win = get_oil_buf()
-          Image.Create(win, start_row, start_column, output, { oil_win }, filepath)
+          local oil_buf = get_oil_buf()
+          Image.Create(win, start_row, start_column, output, { oil_buf }, filepath)
           Image.Prepare()
           Image.Draw()
         end)
@@ -107,9 +112,11 @@ function M.get_oil_filepath()
   local oil = require("oil")
   local entry = oil.get_cursor_entry()
   local dir = oil.get_current_dir()
+
   if entry ~= nil then
     return dir .. entry.parsed_name
   end
+
   return ""
 end
 

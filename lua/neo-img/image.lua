@@ -69,11 +69,18 @@ function Image.Prepare()
   end
 end
 
+function Image.StopJob()
+  if Image.job ~= nil then
+    vim.fn.jobstop(Image.job)
+    Image.job = nil
+  end
+end
+
 function Image.Delete()
   if Image.Should_Clean() then
-    vim.notify("clear")
     vim.api.nvim_command("mode")
   end
+  Image.StopJob()
 end
 
 return Image

@@ -1,3 +1,4 @@
 [submodule "ttyimg"]
-	path = ttyimg
-	url = https://github.com/Skardyy/ttyimg
+  path = ttyimg
+  url = https://github.com/Skardyy/ttyimg
+  branch = main
