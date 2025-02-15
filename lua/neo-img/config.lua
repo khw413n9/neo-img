@@ -55,6 +55,10 @@ function M.get_bin_path()
   end
 end
 
+function M.set_bin_path()
+  config.bin_path = M.get_bin_path()
+end
+
 function M.setup(opts)
   config.bin_path = M.get_bin_path()
   config = vim.tbl_deep_extend('force', M.defaults, opts or {})

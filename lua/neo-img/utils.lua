@@ -108,7 +108,7 @@ function M.display_image(filepath, win)
     on_stdout = function(_, data)
       if data then
         local output = table.concat(data, "\n")
-        if data == nil then return end
+        if string.len(vim.inspect(data)) < 100 then return end
         vim.schedule(function()
           if Image.job ~= nil then
             Image.cache[vim.inspect(command)] = output

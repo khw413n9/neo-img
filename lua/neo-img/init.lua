@@ -69,15 +69,15 @@ function M.install()
   local handle = vim.loop.spawn(downloader[1], { args = { unpack(downloader, 2) } }, function(code, signal)
     if code == 0 then
       print("Downloaded ttyimg successfully to " .. output_path)
-      vim.schedule(function()
-        config.get().bin_path = config.get_bin_path()
-      end)
 
       -- Perform chmod to make the binary executable (only for non-Windows systems)
       if os ~= "windows" then
         local chmod_handle = vim.loop.spawn("chmod", { args = { "+x", output_path } }, function(chmod_code)
           if chmod_code == 0 then
             print("done installing ttyimg!")
+            vim.schedule(function()
+              config.set_bin_path()
+            end)
           else
             print("Failed to set executable permissions for " .. output_path)
           end
@@ -88,6 +88,9 @@ function M.install()
         end
       else
         print("done installing ttyimg!")
+        vim.schedule(function()
+          config.set_bin_path()
+        end)
       end
     else
       print("Failed to download ttyimg. Exit code: " .. code .. ", Signal: " .. signal)
