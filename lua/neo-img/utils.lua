@@ -62,6 +62,26 @@ local function get_oil_buf()
   return nil
 end
 
+function M.is_window_large_enough(win)
+  local screen_width = vim.o.columns
+  local screen_height = vim.o.lines
+
+  local win_width = vim.api.nvim_win_get_width(win)
+  local win_height = vim.api.nvim_win_get_height(win)
+
+  local min_width = screen_width * 0.3
+  local min_height = screen_height * 0.3
+
+  return win_width >= min_width and win_height >= min_height
+end
+
+local function draw_image(config, win, row, col, output, filepath)
+  local watch = config.oil_preview and { get_oil_buf() } or {}
+  Image.Create(win, row, col, output, watch, filepath)
+  Image.Prepare()
+  Image.Draw()
+end
+
 function M.display_image(filepath, win)
   local config = require('neo-img.config').get()
 
@@ -75,22 +95,27 @@ function M.display_image(filepath, win)
     return
   end
 
+  Image.Delete()
   local size, start_row, start_column = M.get_dims(win)
   local command = build_command(filepath, size)
+  local cached_output = Image.cache[vim.inspect(command)]
+  if cached_output ~= nil then
+    vim.notify(string.len(cached_output))
+    draw_image(config, win, start_row, start_column, cached_output, filepath)
+    return
+  end
 
-  Image.Delete()
   Image.job = vim.fn.jobstart(command, {
     on_stdout = function(_, data)
       if data then
         local output = table.concat(data, "\n")
+        if data == nil then return end
         vim.schedule(function()
-          if Image.job then
+          if Image.job ~= nil then
+            Image.cache[vim.inspect(command)] = output
             Image.job = nil
           end
-          local oil_buf = get_oil_buf()
-          Image.Create(win, start_row, start_column, output, { oil_buf }, filepath)
-          Image.Prepare()
-          Image.Draw()
+          draw_image(config, win, start_row, start_column, output, filepath)
         end)
       end
     end,
@@ -99,12 +124,14 @@ function M.display_image(filepath, win)
 end
 
 function M.get_oil_filepath()
-  local oil = require("oil")
-  local entry = oil.get_cursor_entry()
-  local dir = oil.get_current_dir()
+  if require("neo-img.config").get().oil_preview then
+    local oil = require("oil")
+    local entry = oil.get_cursor_entry()
+    local dir = oil.get_current_dir()
 
-  if entry ~= nil then
-    return dir .. entry.parsed_name
+    if entry ~= nil then
+      return dir .. entry.parsed_name
+    end
   end
 
   return ""

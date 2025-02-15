@@ -30,11 +30,16 @@ M.defaults = {
 
 local config = M.defaults
 
-local function get_bin_path()
-  local bin_name = "ttyimg/ttyimg"
+function M.get_bin_dir()
+  local bin_name = "ttyimg"
   local config_dir = debug.getinfo(1).source:sub(2)
   local _, end_idx = config_dir:find("neo%-img")
-  local bin_path = config_dir:sub(1, end_idx) .. "/" .. bin_name
+  return config_dir:sub(1, end_idx) .. "/" .. bin_name
+end
+
+function M.get_bin_path()
+  local bin_dir = M.get_bin_dir()
+  local bin_path = bin_dir .. "/ttyimg"
 
   local local_bin = vim.fn.exepath(bin_path)
   if local_bin ~= "" then
@@ -51,7 +56,7 @@ local function get_bin_path()
 end
 
 function M.setup(opts)
-  config.bin_path = get_bin_path()
+  config.bin_path = M.get_bin_path()
   config = vim.tbl_deep_extend('force', M.defaults, opts or {})
 end
 

@@ -9,10 +9,7 @@ function M.setup(opts)
 end
 
 function M.install()
-  local bin_name = "ttyimg"
-  local config_dir = debug.getinfo(1).source:sub(2)
-  local _, end_idx = config_dir:find("neo%-img")
-  local target_dir = config_dir:sub(1, end_idx) .. "/" .. bin_name
+  local target_dir = config.get_bin_dir()
 
   local uname = vim.loop.os_uname()
   local os, arch = uname.sysname:lower(), uname.machine
@@ -72,12 +69,15 @@ function M.install()
   local handle = vim.loop.spawn(downloader[1], { args = { unpack(downloader, 2) } }, function(code, signal)
     if code == 0 then
       print("Downloaded ttyimg successfully to " .. output_path)
+      vim.schedule(function()
+        config.get().bin_path = config.get_bin_path()
+      end)
 
       -- Perform chmod to make the binary executable (only for non-Windows systems)
       if os ~= "windows" then
         local chmod_handle = vim.loop.spawn("chmod", { args = { "+x", output_path } }, function(chmod_code)
           if chmod_code == 0 then
-            print("Set executable permissions for " .. output_path)
+            print("chmod +x " .. output_path)
           else
             print("Failed to set executable permissions for " .. output_path)
           end
@@ -87,6 +87,7 @@ function M.install()
           print("Failed to start chmod process.")
         end
       end
+      print("done installing ttyimg!")
     else
       print("Failed to download ttyimg. Exit code: " .. code .. ", Signal: " .. signal)
     end

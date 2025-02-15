@@ -16,7 +16,9 @@ local function setup_main(config)
 
         if ext and config.supported_extensions[ext:lower()] then
           local win = vim.fn.bufwinid(ev.buf)
-          utils.display_image(filepath, win)
+          if utils.is_window_large_enough(win) then
+            utils.display_image(filepath, win)
+          end
         end
       end, 10)
     end
