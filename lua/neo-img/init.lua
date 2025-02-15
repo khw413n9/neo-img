@@ -77,7 +77,7 @@ function M.install()
       if os ~= "windows" then
         local chmod_handle = vim.loop.spawn("chmod", { args = { "+x", output_path } }, function(chmod_code)
           if chmod_code == 0 then
-            print("chmod +x " .. output_path)
+            print("done installing ttyimg!")
           else
             print("Failed to set executable permissions for " .. output_path)
           end
@@ -86,8 +86,9 @@ function M.install()
         if not chmod_handle then
           print("Failed to start chmod process.")
         end
+      else
+        print("done installing ttyimg!")
       end
-      print("done installing ttyimg!")
     else
       print("Failed to download ttyimg. Exit code: " .. code .. ", Signal: " .. signal)
     end

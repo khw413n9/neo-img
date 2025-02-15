@@ -8,12 +8,12 @@ https://github.com/user-attachments/assets/f7c76789-d57f-437c-b4da-444eebb7eb20
 ## Features ✨  
 - Automatically preview supported image files
 - Oil.nvim preview support
+- Caching
 
 ## Installation 🚀  
 
 > uses [ttyimg](https://github.com/Skardyy/ttyimg)  
-> the plugin will bundle it, just make sure to add the `build = "cd ttyimg && go build"`  
-> but make sure you have [go](https://go.dev/) installed  
+> the plugin will bundle it, just make sure to run `:NeoImg Install`   
 
 > you can install it globally as well: `go install github.com/Skardyy/ttyimg@latest`  
 > make sure GOPATH is in your path `export PATH="$HOME/go/bin:$PATH`  
@@ -22,7 +22,9 @@ Using lazy.nvim:
 ```lua
 return {
     'skardyy/neo-img',
-    build = "cd ttyimg && go build",  -- build ttyimg
+      build = function() -- option: it calls :NeoImg Install
+        require("neo-img").install()
+      end,
     config = function()
         require('neo-img').setup()
     end
@@ -30,10 +32,13 @@ return {
 ```
 
 ## Usage 💼  
-- Images will automatically preview when opening supported files
-- Use `:NeoImgShow` to manually display the current file
+- Images will automatically preview when opening supported files  
+- Use `:NeoImg DisplayImage` to manually display the current file  
+- you can also call `require("neo-img.utils").display_image(filepath, win)` to display the image in the given window  
 
 ## Configuration ⚙️  
+> document type files currently rely on `libreoffice` to convert them into image  
+> see [ttyimg](https://github.com/Skardyy/ttyimg) for more info on supported files and why  
 ```lua
 require('neo-img').setup({
   supported_extensions = {
@@ -42,22 +47,27 @@ require('neo-img').setup({
     ['jpeg'] = true,
     ['webp'] = true,
     ['svg'] = true,
-    ['tiff'] = true
+    ['tiff'] = true,
+    ['tif'] = true,
+    ['docx'] = true,
+    ['xlsx'] = true,
+    ['pdf'] = true,
+    ['pptx'] = true,
   },
-  auto_open = true,             -- Automatically open images when buffer is loaded
-  oil_preview = true,           -- changes oil preview of images too
-  backend = "auto",             -- auto detect: kitty / iterm / sixel
-  size = {                      --scales the width, will maintain aspect ratio
-    oil = { x = 400, y = 400 }, -- a number (oil = 400) will set both at once
-    main = { x = 800, y = 800 }
+  auto_open = true,   -- Automatically open images when buffer is loaded
+  oil_preview = true, -- changes oil preview of images too
+  backend = "auto",   -- auto / kitty / iterm / sixel
+  size = { -- size in pixels
+    x = 800,
+    y = 800
   },
-  offset = {
-    oil = { x = 5, y = 3 }, -- a number will only change the x
-    main = { x = 10, y = 3 }
+  offset = { -- offset in cells (rows / cols)
+    x = 10,
+    y = 3
   },
   resizeMode = "Fit" -- Fit / Strech / Crop
 })
-```
+```  
 
 > [!Important]
 > adjust the offset and size to match your screen  

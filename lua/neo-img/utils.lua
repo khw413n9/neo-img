@@ -100,7 +100,6 @@ function M.display_image(filepath, win)
   local command = build_command(filepath, size)
   local cached_output = Image.cache[vim.inspect(command)]
   if cached_output ~= nil then
-    vim.notify(string.len(cached_output))
     draw_image(config, win, start_row, start_column, cached_output, filepath)
     return
   end

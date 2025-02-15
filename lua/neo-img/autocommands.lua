@@ -26,10 +26,24 @@ local function setup_main(config)
 end
 
 local function setup_api()
-  vim.api.nvim_create_user_command('InstallTtyimg', function()
-    print("Installing Ttyimg...")
-    require("neo-img").install()
-  end, {})
+  vim.api.nvim_create_user_command('NeoImg', function(opts)
+    local command_name = opts.args
+    if command_name == 'Install' then
+      print("Installing Ttyimg...")
+      require("neo-img").install()
+    elseif command_name == 'DisplayImage' then
+      local buf_name = vim.api.nvim_buf_get_name(0)
+      local current_win = vim.api.nvim_get_current_win()
+      if buf_name ~= "" then
+        utils.display_image(buf_name, current_win)
+      end
+    end
+  end, {
+    nargs = 1,
+    complete = function()
+      return { 'Install', 'DisplayImage' }
+    end
+  })
 end
 
 function M:setup()
