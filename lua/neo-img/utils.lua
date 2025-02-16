@@ -1,12 +1,13 @@
 local M = {}
 local Image = require("neo-img.image")
+local main_config = require("neo-img.config")
 
 function M.get_max_rows()
   return vim.o.lines - vim.o.cmdheight - 1
 end
 
 function M.get_dims(win)
-  local config        = require('neo-img.config').get()
+  local config        = main_config.get()
   local row, col      = unpack(vim.api.nvim_win_get_position(win))
 
   local max_rows      = M.get_max_rows()
@@ -42,7 +43,7 @@ function M.get_extension(filename)
 end
 
 local function build_command(filepath, size)
-  local config = require('neo-img.config').get()
+  local config = main_config.get()
   local valid_configs = { iterm = true, kitty = true, sixel = true }
   if valid_configs[config.backend] then
     return { config.bin_path, "-m", config.resizeMode, "-w", size.x, "-h", size.y, '-f', 'sixel', "-p", config.backend,
@@ -83,7 +84,7 @@ local function draw_image(config, win, row, col, output, filepath)
 end
 
 function M.display_image(filepath, win)
-  local config = require('neo-img.config').get()
+  local config = main_config.get()
 
   if config.bin_path == "" then
     vim.notify("ttyimg isn't installed, can't show img", vim.log.levels.ERROR)
@@ -108,7 +109,13 @@ function M.display_image(filepath, win)
     on_stdout = function(_, data)
       if data then
         local output = table.concat(data, "\n")
-        if string.len(vim.inspect(data)) < 100 then return end
+        -- error
+        if string.len(vim.inspect(data)) < 100 then
+          -- if empty probbs just stopjob
+          if output == "" then return end
+          vim.notify("error: " .. output)
+          return
+        end
         vim.schedule(function()
           if Image.job ~= nil then
             Image.cache[vim.inspect(command)] = output
@@ -122,9 +129,34 @@ function M.display_image(filepath, win)
   })
 end
 
+function M.setup_oil()
+  local status_ok, oil = pcall(require, "oil.config")
+  if not status_ok then return end
+
+  oil.preview_win.disable_preview = function(filepath)
+    local ext = M.get_extension(filepath)
+    if main_config.get().supported_extensions[ext] then
+      return true
+    end
+  end
+  return false
+end
+
+function M.lock_buf(buf)
+  -- make it empty and not saveable, dk if all things are needed
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
+  vim.api.nvim_buf_set_option(buf, "modifiable", false)
+  vim.api.nvim_buf_set_option(buf, "buftype", "nofile")
+  vim.api.nvim_buf_set_option(buf, "swapfile", false)
+  vim.api.nvim_buf_set_option(buf, "bufhidden", "hide")
+  vim.api.nvim_buf_set_option(buf, "readonly", true)
+end
+
 function M.get_oil_filepath()
-  if require("neo-img.config").get().oil_preview then
-    local oil = require("oil")
+  if main_config.get().oil_preview then
+    local status_ok, oil = pcall(require, "oil")
+    if not status_ok then return "" end
+
     local entry = oil.get_cursor_entry()
     local dir = oil.get_current_dir()
 
