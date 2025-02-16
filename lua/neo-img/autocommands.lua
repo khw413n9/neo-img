@@ -67,8 +67,10 @@ function M:setup()
   local config = main_config.get()
   vim.g.zipPlugin_ext = "zip" -- showing image so no need for unzip
   if config.auto_open then
-    utils.setup_oil()         -- disables preview for files that im already showing image preview
     setup_main(config)
+  end
+  if config.oil_preview then
+    utils.setup_oil() -- disables preview for files that im already showing image preview
   end
   setup_api()
 end
