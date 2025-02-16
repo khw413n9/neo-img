@@ -36,7 +36,7 @@ return {
 - you can also call `require("neo-img.utils").display_image(filepath, win)` to display the image in the given window  
 
 ## Configuration ⚙️  
-> document type files currently rely on `libreoffice` to convert them into image  
+> document type files currently rely on `libreoffice` to convert them into image, so make sure libreoffice is in your path (in windows it's called soffice)  
 > see [ttyimg](https://github.com/Skardyy/ttyimg) for more info on supported files and why  
 ```lua
 require('neo-img').setup({
