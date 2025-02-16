@@ -13,16 +13,15 @@ https://github.com/user-attachments/assets/f7c76789-d57f-437c-b4da-444eebb7eb20
 ## Installation 🚀  
 
 > uses [ttyimg](https://github.com/Skardyy/ttyimg)  
-> the plugin will bundle it, just make sure to run `:NeoImg Install`   
-
-> you can install it globally as well: `go install github.com/Skardyy/ttyimg@latest`  
-> make sure GOPATH is in your path `export PATH="$HOME/go/bin:$PATH`  
+> you can install it in 2 ways:  
+1) run `:NeoImg Install` **(recommended)**, it will install a precompiled binary  
+2) install it globally via go `go install github.com/Skardyy/ttyimg@latest`, make sure you have GOPATH in your path `export PATH="$HOME/go/bin:$PATH`
 
 Using lazy.nvim:
 ```lua
 return {
     'skardyy/neo-img',
-      build = function() -- option: it calls :NeoImg Install
+      build = function() -- option: it calls :NeoImg Install, may fail in first install because the plugin isn't ready at build, mostly for updates
         require("neo-img").install()
       end,
     config = function()
