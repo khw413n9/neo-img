@@ -14,8 +14,8 @@ https://github.com/user-attachments/assets/f7c76789-d57f-437c-b4da-444eebb7eb20
 
 > uses [ttyimg](https://github.com/Skardyy/ttyimg)  
 > you can install it in 2 ways:  
-1) run `:NeoImg Install` **(recommended)**, it will install a precompiled binary  
-2) install it globally via go `go install github.com/Skardyy/ttyimg@latest`, make sure you have GOPATH in your path `export PATH="$HOME/go/bin:$PATH`
+> * **(recommended)** run `:NeoImg Install`, it will install a precompiled binary  
+> * install it globally via go `go install github.com/Skardyy/ttyimg@latest`, make sure you have GOPATH in your path `export PATH="$HOME/go/bin:$PATH`
 
 Using lazy.nvim:
 ```lua
