@@ -133,10 +133,12 @@ function M.setup_oil()
   local status_ok, oil = pcall(require, "oil.config")
   if not status_ok then return end
 
-  oil.preview_win.disable_preview = function(filepath)
-    local ext = M.get_extension(filepath)
-    if main_config.get().supported_extensions[ext] then
-      return true
+  if oil.preview_win ~= nil then
+    oil.preview_win.disable_preview = function(filepath)
+      local ext = M.get_extension(filepath)
+      if main_config.get().supported_extensions[ext] then
+        return true
+      end
     end
   end
   return false
