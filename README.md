@@ -1,7 +1,10 @@
-# neo-img 🖼️  
-A Neovim plugin for viewing images in the terminal.  
+<h1 align="center">🖼️Neo-Img🖼️</h1>  
+<div align="center">
+    
+![Stars](https://img.shields.io/github/stars/skardyy/neo-img) ˙ ![License](https://img.shields.io/github/license/skardyy/neo-img) ˙ ![Commit Activity](https://img.shields.io/github/languages/top/skardyy/neo-img)
+</div>
 
-## Demo 🎬  
+<h3 align="center">A Neovim plugin for viewing images in the terminal.</h3> 
 
 https://github.com/user-attachments/assets/f7c76789-d57f-437c-b4da-444eebb7eb20
 
@@ -14,16 +17,16 @@ https://github.com/user-attachments/assets/f7c76789-d57f-437c-b4da-444eebb7eb20
 
 > uses [ttyimg](https://github.com/Skardyy/ttyimg)  
 > you can install it in 2 ways:  
-> * **(recommended)** run `:NeoImg Install`, it will install a precompiled binary  
-> * install it globally via go `go install github.com/Skardyy/ttyimg@latest`, make sure you have GOPATH in your path `export PATH="$HOME/go/bin:$PATH`
+> * via `:NeoImg Install` **(recommended)**
+> * globally via `go install github.com/Skardyy/ttyimg@latest`, make sure you have GOPATH in your path `export PATH="$HOME/go/bin:$PATH`
 
 Using lazy.nvim:
 ```lua
 return {
     'skardyy/neo-img',
-      build = function() -- option: it calls :NeoImg Install, may fail in first install because the plugin isn't ready at build, mostly for updates
+    build = function()
         require("neo-img").install()
-      end,
+    end,
     config = function()
         require('neo-img').setup()
     end
@@ -36,8 +39,16 @@ return {
 - you can also call `require("neo-img.utils").display_image(filepath, win)` to display the image in the given window  
 
 ## Configuration ⚙️  
-> document type files currently rely on `libreoffice` to convert them into image, so make sure libreoffice is in your path (in windows it's called soffice)  
-> see [ttyimg](https://github.com/Skardyy/ttyimg) for more info on supported files and why  
+> document files require 
+><details>
+>  <summary>Libreoffice</summary>
+> 
+>  ```txt
+>    make sure its installed and in your path  
+>    * in windows its called soffice and should be in C:\Program Files\LibreOffice\program 
+>    * linux should add it to path automatically
+>  ```
+> </details>
 ```lua
 require('neo-img').setup({
   supported_extensions = {
@@ -71,4 +82,3 @@ require('neo-img').setup({
 > [!Important]
 > adjust the offset and size to match your screen  
 > default config is likely to not look good on your screen  
-> also sixel support is experimental, it may be slow and look worser then the other options  

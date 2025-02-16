@@ -16,25 +16,18 @@ function M.get_dims(win)
   local min_cols      = vim.api.nvim_win_get_width(win)  -- Columns in the current window
   local width_factor  = min_cols / max_cols
   local height_factor = min_rows / max_rows
-  if config.size_isnumber then
-    if width_factor < height_factor then
-      height_factor = width_factor
-    elseif height_factor < width_factor then
-      width_factor = height_factor
-    end
-  end
 
-  local new_size     = {
+  local new_size      = {
     x = math.floor(config.size.x * width_factor),
     y = math.floor(config.size.y * height_factor)
   }
-  local new_offset   = {
+  local new_offset    = {
     x = math.floor(config.offset.x * width_factor + 0.5),
     y = math.floor(config.offset.y * height_factor + 0.5)
   }
 
-  local start_row    = row + new_offset.y
-  local start_column = col + new_offset.x
+  local start_row     = row + new_offset.y
+  local start_column  = col + new_offset.x
   return new_size, start_row, start_column
 end
 
@@ -87,7 +80,7 @@ function M.display_image(filepath, win)
   local config = main_config.get()
 
   if config.bin_path == "" then
-    vim.notify("ttyimg isn't installed, can't show img", vim.log.levels.ERROR)
+    vim.notify("ttyimg isn't installed, call :NeoImg Install", vim.log.levels.ERROR)
     return
   end
 

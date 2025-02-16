@@ -50,7 +50,7 @@ function M.get_bin_path()
   if global_binary ~= "" then
     return global_binary
   else
-    print("No plugin manager detected and ttyimg is not installed globally. Please install ttyimg manually.")
+    print("couldn't find ttyimg, please call :NeoImg Install")
     return ""
   end
 end
