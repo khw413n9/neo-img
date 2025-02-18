@@ -1,11 +1,11 @@
-<h1 align="center">🖼️Neo-Img🖼️</h1>  
+<h1 align="center">Neo-Img</h1>  
+<p align="center">A Neovim plugin for viewing images in the terminal.</p> 
 <div align="center">
     
-![Stars](https://img.shields.io/github/stars/skardyy/neo-img) ˙ ![License](https://img.shields.io/github/license/skardyy/neo-img) ˙ ![Commit Activity](https://img.shields.io/github/languages/top/skardyy/neo-img)
+[![Static Badge](https://img.shields.io/badge/ttyimg-4676C6?logo=educative&logoColor=4676C6&label=built%20upon&labelColor=15161b)](https://github.com/Skardyy/ttyimg) ˙ [![Static Badge](https://img.shields.io/badge/neovim-3CA628?logo=neovim&logoColor=3CA628&label=built%20for&labelColor=15161b)](https://neovim.io) ˙ ![GitHub License](https://img.shields.io/github/license/Skardyy/neo-img?style=flat&labelColor=%2315161b&color=%23f74b00)
 </div>
 
-<h3 align="center">A Neovim plugin for viewing images in the terminal.</h3> 
-
+---
 https://github.com/user-attachments/assets/f7c76789-d57f-437c-b4da-444eebb7eb20
 
 ## Features ✨  

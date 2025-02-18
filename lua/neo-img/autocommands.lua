@@ -43,16 +43,21 @@ local function setup_main(config)
 end
 
 local function setup_api()
+  local config = main_config.get()
   vim.api.nvim_create_user_command('NeoImg', function(opts)
     local command_name = opts.args
     if command_name == 'Install' then
       print("Installing Ttyimg...")
       require("neo-img").install()
     elseif command_name == 'DisplayImage' then
-      local buf_name = vim.api.nvim_buf_get_name(0)
-      local current_win = vim.api.nvim_get_current_win()
-      if buf_name ~= "" then
-        utils.display_image(buf_name, current_win)
+      local buf = vim.api.nvim_get_current_buf()
+      local buf_name = vim.api.nvim_buf_get_name(buf)
+      local ext = utils.get_extension(buf_name)
+      if ext and config.supported_extensions[ext:lower()] then
+        local win = vim.fn.bufwinid(buf)
+        utils.display_image(buf_name, win)
+      else
+        vim.notify("invalid path for image: " .. buf_name)
       end
     end
   end, {
