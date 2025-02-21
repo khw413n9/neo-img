@@ -1,7 +1,6 @@
 local Image = {
   watch = {},
   draw = {},
-  cache = {}
 }
 local tty = require("neo-img.tty")
 

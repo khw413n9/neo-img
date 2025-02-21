@@ -6,28 +6,44 @@ function M.get_max_rows()
   return vim.o.lines - vim.o.cmdheight - 1
 end
 
+local function get_scale_factor(value)
+  local numberString = value:gsub("%%", "")
+  local number = tonumber(numberString)
+  if number < 1 then
+    return number
+  else
+    return tonumber(numberString) / 100
+  end
+end
+
 function M.get_dims(win)
-  local config        = main_config.get()
-  local row, col      = unpack(vim.api.nvim_win_get_position(win))
+  local config       = main_config.get()
+  local row, col     = unpack(vim.api.nvim_win_get_position(win))
 
-  local max_rows      = M.get_max_rows()
-  local max_cols      = vim.o.columns
-  local min_rows      = vim.api.nvim_win_get_height(win) -- Rows in the current window
-  local min_cols      = vim.api.nvim_win_get_width(win)  -- Columns in the current window
-  local width_factor  = min_cols / max_cols
-  local height_factor = min_rows / max_rows
+  local min_rows     = vim.api.nvim_win_get_height(win) -- Rows in the current window
+  local min_cols     = vim.api.nvim_win_get_width(win)  -- Columns in the current window
+  local scale_factor = get_scale_factor(config.size)
 
-  local new_size      = {
-    x = math.floor(config.size.x * width_factor),
-    y = math.floor(config.size.y * height_factor)
-  }
-  local new_offset    = {
-    x = math.floor(config.offset.x * width_factor + 0.5),
-    y = math.floor(config.offset.y * height_factor + 0.5)
+  local new_size     = {
+    x = math.floor(min_cols * scale_factor + 0.5),
+    y = math.floor(min_rows * scale_factor + 0.5)
   }
 
-  local start_row     = row + new_offset.y
-  local start_column  = col + new_offset.x
+  local offsetx, offsety
+  if not config.center then
+    local tx, ty = config.offset:match("^(%d+)x(%d+)$")
+    offsetx, offsety = tonumber(tx), tonumber(ty)
+  end
+  local new_offset   = {
+    x = config.center and math.floor((min_cols - new_size.x) / 2 + 0.5) or offsetx,
+    y = config.center and math.floor((min_rows - new_size.y) / 2 + 0.5) or offsety
+  }
+
+  new_size.x         = new_size.x .. "c"
+  new_size.y         = new_size.y .. "c"
+
+  local start_row    = row + new_offset.y
+  local start_column = col + new_offset.x
   return new_size, start_row, start_column
 end
 
@@ -36,13 +52,23 @@ function M.get_extension(filename)
 end
 
 local function build_command(filepath, size)
+  local rows = vim.o.lines - vim.o.cmdheight - 1
+  local cols = vim.o.columns
+  local sizeCells = cols .. "x" .. rows .. "xforce"
+
   local config = main_config.get()
   local valid_configs = { iterm = true, kitty = true, sixel = true }
   if valid_configs[config.backend] then
-    return { config.bin_path, "-m", config.resizeMode, "-w", size.x, "-h", size.y, '-f', 'sixel', "-p", config.backend,
+    return { config.bin_path, "-m", config.resizeMode, "-sc", sizeCells, "-spx", config.window_size, "-center=false",
+      "-w", size.x, "-h", size.y,
+      '-f', 'sixel',
+      "-p", config.backend,
       filepath }
   else
-    return { config.bin_path, "-m", config.resizeMode, "-w", size.x, "-h", size.y, '-f', 'sixel', filepath }
+    return { config.bin_path, "-m", config.resizeMode, "-sc", sizeCells, "-spx", config.window_size, "-center=false",
+      "-w", size.x, "-h", size.y,
+      '-f', 'sixel',
+      filepath }
   end
 end
 
@@ -89,15 +115,10 @@ function M.display_image(filepath, win)
     return
   end
 
-  Image.Delete()
   local size, start_row, start_column = M.get_dims(win)
   local command = build_command(filepath, size)
-  local cached_output = Image.cache[vim.inspect(command)]
-  if cached_output ~= nil then
-    draw_image(config, win, start_row, start_column, cached_output, filepath)
-    return
-  end
 
+  Image.Delete()
   Image.job = vim.fn.jobstart(command, {
     on_stdout = function(_, data)
       if data then
@@ -111,7 +132,6 @@ function M.display_image(filepath, win)
         end
         vim.schedule(function()
           if Image.job ~= nil then
-            Image.cache[vim.inspect(command)] = output
             Image.job = nil
           end
           draw_image(config, win, start_row, start_column, output, filepath)

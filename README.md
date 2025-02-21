@@ -1,8 +1,8 @@
 <h1 align="center">Neo-Img</h1>  
-<p align="center">A Neovim plugin for viewing images in the terminal.</p> 
+<p align="center">🖼️ A Neovim plugin for viewing images in the terminal. 🖼️</p> 
 <div align="center">
     
-[![Static Badge](https://img.shields.io/badge/ttyimg-4676C6?logo=educative&logoColor=4676C6&label=built%20upon&labelColor=15161b)](https://github.com/Skardyy/ttyimg) ˙ [![Static Badge](https://img.shields.io/badge/neovim-3CA628?logo=neovim&logoColor=3CA628&label=built%20for&labelColor=15161b)](https://neovim.io) ˙ ![GitHub License](https://img.shields.io/github/license/Skardyy/neo-img?style=flat&labelColor=%2315161b&color=%23f74b00)
+[![Static Badge](https://img.shields.io/badge/neovim-3CA628?logo=neovim&logoColor=3CA628&label=built%20for&labelColor=15161b)](https://neovim.io)
 </div>
 
 ---
@@ -45,8 +45,8 @@ return {
 > 
 >  ```txt
 >    make sure its installed and in your path  
->    * in windows its called soffice and should be in C:\Program Files\LibreOffice\program 
->    * linux should add it to path automatically
+>    * window: its called soffice and should be in C:\Program Files\LibreOffice\program 
+>    * linux: should be in the path automatically
 >  ```
 > </details>
 ```lua
@@ -64,21 +64,25 @@ require('neo-img').setup({
     ['pdf'] = true,
     ['pptx'] = true,
   },
+  ----- Important ones -----
+  window_size = "1920x1080", -- size of the window. in windows auto queries using windows api, linux in the TODO. see below how to get the size of window in linux
+  size = "80%",              -- size of the image in percent
+  center = true,             -- rather or not to center the image in the window
+  ----- Important ones -----
+
+  ----- Less Important -----
   auto_open = true,   -- Automatically open images when buffer is loaded
   oil_preview = true, -- changes oil preview of images too
   backend = "auto",   -- auto / kitty / iterm / sixel
-  size = { -- size in pixels
-    x = 800,
-    y = 800
-  },
-  offset = { -- offset in cells (rows / cols)
-    x = 10,
-    y = 3
-  },
-  resizeMode = "Fit" -- Fit / Strech / Crop
+  resizeMode = "Fit", -- Fit / Strech / Crop
+  offset = "0x3"      -- that exmp is 0 cells offset x and 3 y. this options is irrelevant when centered
+  ----- Less Important -----
 })
 ```  
 
 > [!Important]
-> adjust the offset and size to match your screen  
-> default config is likely to not look good on your screen  
+> in order to get the size for the window_size option you can:  
+> write printf "\033[14t" into your terminal  
+> it should return something [4;<height>;<width>t  
+> for windows it auto queries the size using the winodws api
+

@@ -1,9 +1,7 @@
-# neo-img 🖼️  
-A Neovim plugin for viewing images in the terminal.  
+# Neo-Img  
+🖼️ A Neovim plugin for viewing images in the terminal. 
 
-## Demo 🎬  
-
-https://github.com/user-attachments/assets/f7c76789-d57f-437c-b4da-444eebb7eb20
+---
 
 ## Features ✨  
 - Automatically preview supported image files
@@ -14,16 +12,16 @@ https://github.com/user-attachments/assets/f7c76789-d57f-437c-b4da-444eebb7eb20
 
 > uses [ttyimg](https://github.com/Skardyy/ttyimg)  
 > you can install it in 2 ways:  
-1) run `:NeoImg Install` **(recommended)**, it will install a precompiled binary  
-2) install it globally via go `go install github.com/Skardyy/ttyimg@latest`, make sure you have GOPATH in your path `export PATH="$HOME/go/bin:$PATH`
+> * via `:NeoImg Install` **(recommended)**
+> * globally via `go install github.com/Skardyy/ttyimg@latest`, make sure you have GOPATH in your path `export PATH="$HOME/go/bin:$PATH`
 
 Using lazy.nvim:
 ```lua
 return {
     'skardyy/neo-img',
-      build = function() -- option: it calls :NeoImg Install, may fail in first install because the plugin isn't ready at build, mostly for updates
+    build = function()
         require("neo-img").install()
-      end,
+    end,
     config = function()
         require('neo-img').setup()
     end
@@ -36,8 +34,16 @@ return {
 - you can also call `require("neo-img.utils").display_image(filepath, win)` to display the image in the given window  
 
 ## Configuration ⚙️  
-> document type files currently rely on `libreoffice` to convert them into image  
-> see [ttyimg](https://github.com/Skardyy/ttyimg) for more info on supported files and why  
+> document files require 
+><details>
+>  <summary>Libreoffice</summary>
+> 
+>  ```txt
+>    make sure its installed and in your path  
+>    * window: its called soffice and should be in C:\Program Files\LibreOffice\program 
+>    * linux: should be in the path automatically
+>  ```
+> </details>
 ```lua
 require('neo-img').setup({
   supported_extensions = {
@@ -53,22 +59,25 @@ require('neo-img').setup({
     ['pdf'] = true,
     ['pptx'] = true,
   },
+  ----- Important ones -----
+  window_size = "1920x1080", -- size of the window. in windows auto queries using windows api, linux in the TODO. see below how to get the size of window in linux
+  size = "80%",              -- size of the image in percent
+  center = true,             -- rather or not to center the image in the window
+  ----- Important ones -----
+
+  ----- Less Important -----
   auto_open = true,   -- Automatically open images when buffer is loaded
   oil_preview = true, -- changes oil preview of images too
   backend = "auto",   -- auto / kitty / iterm / sixel
-  size = { -- size in pixels
-    x = 800,
-    y = 800
-  },
-  offset = { -- offset in cells (rows / cols)
-    x = 10,
-    y = 3
-  },
-  resizeMode = "Fit" -- Fit / Strech / Crop
+  resizeMode = "Fit", -- Fit / Strech / Crop
+  offset = "0x3"      -- that exmp is 0 cells offset x and 3 y. this options is irrelevant when centered
+  ----- Less Important -----
 })
 ```  
 
 > [!Important]
-> adjust the offset and size to match your screen  
-> default config is likely to not look good on your screen  
-> also sixel support is experimental, it may be slow and look worser then the other options  
+> in order to get the size for the window_size option you can:  
+> write printf "\033[14t" into your terminal  
+> it should return something [4;<height>;<width>t  
+> for windows it auto queries the size using the winodws api
+
