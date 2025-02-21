@@ -83,6 +83,6 @@ require('neo-img').setup({
 > [!Important]
 > in order to get the size for the window_size option you can:  
 > write printf "\033[14t" into your terminal  
-> it should return something [4;<height>;<width>t  
+> it should return something [4;1080;1920t, that being [4;height;width t  
 > for windows it auto queries the size using the winodws api
 
