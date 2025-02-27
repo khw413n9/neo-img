@@ -68,7 +68,7 @@ local function setup_api()
   })
 end
 
-function M:setup()
+function M.setup()
   local config = main_config.get()
   vim.g.zipPlugin_ext = "zip" -- showing image so no need for unzip
   if config.auto_open then
