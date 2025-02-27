@@ -3,6 +3,7 @@ local config = require('neo-img.config')
 local autocmds = require("neo-img.autocommands")
 local utils = require("neo-img.utils")
 
+--- setups the plugin
 function M.setup(opts)
   opts = opts or {}
   config.setup(opts)
@@ -10,6 +11,7 @@ function M.setup(opts)
   autocmds.setup()
 end
 
+--- installs ttyimg, which is a dependency for the plugin
 function M.install()
   local target_dir = config.get_bin_dir()
 

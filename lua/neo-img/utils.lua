@@ -1,3 +1,4 @@
+--- @class NeoImg.Utils
 local M = {}
 local Image = require("neo-img.image")
 local main_config = require("neo-img.config")
@@ -179,6 +180,7 @@ local function build_command(filepath, opts)
   return command
 end
 
+--- @return integer? buf the main oil buf
 local function get_oil_buf()
   for _, win in ipairs(vim.api.nvim_list_wins()) do
     local buf = vim.api.nvim_win_get_buf(win)
@@ -206,7 +208,7 @@ end
 --- removes leading spaces
 --- @param str string the string to remove from
 --- @return string trimmed_str
---- @return integer count
+--- @return integer count how many spaces removed
 local function remove_leading_spaces(str)
   local leading_spaces = str:match("^%s*") -- Get leading spaces
   local count = #leading_spaces            -- Count the length of leading spaces
@@ -259,6 +261,7 @@ function M.display_image(filepath, win)
   })
 end
 
+--- make a buf empty and unwritable
 function M.lock_buf(buf)
   -- make it empty and not saveable, dk if all things are needed
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})

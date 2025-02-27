@@ -1,41 +1,44 @@
+--- @class NeoImg.Autocommands
 local M = {}
 local utils = require "neo-img.utils"
 local Image = require "neo-img.image"
 local main_config = require "neo-img.config"
 local others = require "neo-img.others"
 
+--- setups the main autocommands
 local function setup_main(config)
+  local patterns = {}
+  for ext, _ in pairs(config.supported_extensions) do
+    table.insert(patterns, "*." .. ext)
+  end
+
+  local group = vim.api.nvim_create_augroup("NeoImg", { clear = true })
+
   -- lock bufs on read
   vim.api.nvim_create_autocmd({ "BufRead" }, {
-    pattern = "*",
+    group = group,
+    pattern = patterns,
     callback = function(ev)
-      local filepath = vim.api.nvim_buf_get_name(ev.buf)
-      local ext = utils.get_extension(filepath)
-
-      if ext and config.supported_extensions[ext:lower()] then
-        utils.lock_buf(ev.buf)
-      end
+      utils.lock_buf(ev.buf)
     end
   })
 
-  -- preview image on buf win enter
+  -- preview image on buf enter
   vim.api.nvim_create_autocmd({ "BufEnter" }, {
-    pattern = "*",
+    group = group,
+    pattern = patterns,
     callback = function(ev)
       Image.StopJob()
       vim.schedule(function()
         local filepath = vim.api.nvim_buf_get_name(ev.buf)
-        local ext = utils.get_extension(filepath)
-
-        if ext and config.supported_extensions[ext:lower()] then
-          local win = vim.fn.bufwinid(ev.buf)
-          utils.display_image(filepath, win)
-        end
+        local win = vim.fn.bufwinid(ev.buf)
+        utils.display_image(filepath, win)
       end)
     end
   })
 end
 
+--- setups the api
 local function setup_api()
   local config = main_config.get()
   vim.api.nvim_create_user_command('NeoImg', function(opts)
@@ -62,6 +65,7 @@ local function setup_api()
   })
 end
 
+--- setups all the autocommands for neo-img
 function M.setup()
   local config = main_config.get()
   vim.g.zipPlugin_ext = "zip" -- showing image so no need for unzip

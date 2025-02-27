@@ -17,17 +17,17 @@ local M = {}
 ---@type NeoImg.Config
 M.defaults = {
   supported_extensions = {
-    ['png'] = true,
-    ['jpg'] = true,
-    ['jpeg'] = true,
-    ['webp'] = true,
-    ['svg'] = true,
-    ['tiff'] = true,
-    ['tif'] = true,
-    ['docx'] = true,
-    ['xlsx'] = true,
-    ['pdf'] = true,
-    ['pptx'] = true,
+    png = true,
+    jpg = true,
+    jpeg = true,
+    webp = true,
+    svg = true,
+    tiff = true,
+    tif = true,
+    docx = true,
+    xlsx = true,
+    pdf = true,
+    pptx = true,
   },
 
   ----- Important ones -----

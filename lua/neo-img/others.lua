@@ -2,6 +2,7 @@ local M = {}
 local utils = require "neo-img.utils"
 local main_config = require "neo-img.config"
 
+--- @return integer? win the win that is oil preview
 local function get_first_other_win()
   local current_win = vim.api.nvim_get_current_win()
   local all_wins = vim.api.nvim_list_wins()
@@ -15,6 +16,7 @@ local function get_first_other_win()
   return nil -- No other windows found
 end
 
+--- enables drawing supported_extensions instead of normal oil-preview
 function M.setup_oil()
   local status_ok, oil = pcall(require, "oil.config")
   if not status_ok then return end
