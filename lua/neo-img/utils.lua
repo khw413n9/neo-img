@@ -189,19 +189,6 @@ local function get_oil_buf()
   return nil
 end
 
-function M.is_window_large_enough(win)
-  local screen_width = vim.o.columns
-  local screen_height = vim.o.lines
-
-  local win_width = vim.api.nvim_win_get_width(win)
-  local win_height = vim.api.nvim_win_get_height(win)
-
-  local min_width = screen_width * 0.3
-  local min_height = screen_height * 0.3
-
-  return win_width >= min_width and win_height >= min_height
-end
-
 --- setup and draws the image
 --- @param win integer the window id to listen on remove
 --- @param row integer the starting row
@@ -221,9 +208,9 @@ end
 --- @return string trimmed_str
 --- @return integer count
 local function remove_leading_spaces(str)
-  local leading_spaces = str:match("^%s*")   -- Get leading spaces
-  local count = #leading_spaces              -- Count the length of leading spaces
-  local trimmed_str = str:sub(count + 1)     -- Remove leading spaces
+  local leading_spaces = str:match("^%s*") -- Get leading spaces
+  local count = #leading_spaces            -- Count the length of leading spaces
+  local trimmed_str = str:sub(count + 1)   -- Remove leading spaces
   return trimmed_str, count
 end
 
@@ -272,21 +259,6 @@ function M.display_image(filepath, win)
   })
 end
 
-function M.setup_oil()
-  local status_ok, oil = pcall(require, "oil.config")
-  if not status_ok then return end
-
-  if oil.preview_win ~= nil then
-    oil.preview_win.disable_preview = function(filepath)
-      local ext = M.get_extension(filepath)
-      if main_config.get().supported_extensions[ext] then
-        return true
-      end
-    end
-  end
-  return false
-end
-
 function M.lock_buf(buf)
   -- make it empty and not saveable, dk if all things are needed
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
@@ -295,22 +267,6 @@ function M.lock_buf(buf)
   vim.api.nvim_buf_set_option(buf, "swapfile", false)
   vim.api.nvim_buf_set_option(buf, "bufhidden", "hide")
   vim.api.nvim_buf_set_option(buf, "readonly", true)
-end
-
-function M.get_oil_filepath()
-  if main_config.get().oil_preview then
-    local status_ok, oil = pcall(require, "oil")
-    if not status_ok then return "" end
-
-    local entry = oil.get_cursor_entry()
-    local dir = oil.get_current_dir()
-
-    if entry ~= nil then
-      return dir .. entry.parsed_name
-    end
-  end
-
-  return ""
 end
 
 return M

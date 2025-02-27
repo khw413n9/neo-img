@@ -1,7 +1,8 @@
 local M = {}
-local utils = require("neo-img.utils")
-local Image = require("neo-img.image")
-local main_config = require("neo-img.config")
+local utils = require "neo-img.utils"
+local Image = require "neo-img.image"
+local main_config = require "neo-img.config"
+local others = require "neo-img.others"
 
 local function setup_main(config)
   -- lock bufs on read
@@ -9,8 +10,8 @@ local function setup_main(config)
     pattern = "*",
     callback = function(ev)
       local filepath = vim.api.nvim_buf_get_name(ev.buf)
-      if filepath == "" then return end
       local ext = utils.get_extension(filepath)
+
       if ext and config.supported_extensions[ext:lower()] then
         utils.lock_buf(ev.buf)
       end
@@ -18,26 +19,19 @@ local function setup_main(config)
   })
 
   -- preview image on buf win enter
-  vim.api.nvim_create_autocmd({ "BufWinEnter" }, {
+  vim.api.nvim_create_autocmd({ "BufEnter" }, {
     pattern = "*",
     callback = function(ev)
       Image.StopJob()
-      vim.defer_fn(function()
+      vim.schedule(function()
         local filepath = vim.api.nvim_buf_get_name(ev.buf)
-        -- oil doesn't name its buffers, im also disabling preview so..
-        if filepath == "" then
-          filepath = utils.get_oil_filepath()
-        end
         local ext = utils.get_extension(filepath)
 
         if ext and config.supported_extensions[ext:lower()] then
           local win = vim.fn.bufwinid(ev.buf)
-          -- show only on win that are at least 30% xy. stops random wins from getting images on them lol
-          if utils.is_window_large_enough(win) then
-            utils.display_image(filepath, win)
-          end
+          utils.display_image(filepath, win)
         end
-      end, 10)
+      end)
     end
   })
 end
@@ -75,7 +69,7 @@ function M.setup()
     setup_main(config)
   end
   if config.oil_preview then
-    utils.setup_oil() -- disables preview for files that im already showing image preview
+    others.setup_oil() -- disables preview for files that im already showing image preview
   end
   setup_api()
 end
