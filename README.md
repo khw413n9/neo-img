@@ -2,7 +2,7 @@
 <p align="center">🖼️ A Neovim plugin for viewing images in the terminal. 🖼️</p> 
 <div align="center">
     
-[![Static Badge](https://img.shields.io/badge/neovim-3CA628?logo=neovim&logoColor=3CA628&label=built%20for&labelColor=15161b)](https://neovim.io)
+[![Static Badge](https://img.shields.io/badge/neovim-1e2029?logo=neovim&logoColor=3CA628&label=built%20for&labelColor=15161b)](https://neovim.io)  
 </div>
 
 ---
@@ -52,22 +52,28 @@ return {
 ```lua
 require('neo-img').setup({
   supported_extensions = {
-    ['png'] = true,
-    ['jpg'] = true,
-    ['jpeg'] = true,
-    ['webp'] = true,
-    ['svg'] = true,
-    ['tiff'] = true,
-    ['tif'] = true,
-    ['docx'] = true,
-    ['xlsx'] = true,
-    ['pdf'] = true,
-    ['pptx'] = true,
+    png = true,
+    jpg = true,
+    jpeg = true,
+    tiff = true,
+    tif = true,
+    svg = true,
+    webp = true,
+    bmp = true,
+    gif = true, -- static only
+    docx = true,
+    xlsx = true,
+    pdf = true,
+    pptx = true,
+    odg = true,
+    odp = true,
+    ods = true,
+    odt = true
   },
+
   ----- Important ones -----
-  window_size = "1920x1080", -- size of the window. in windows auto queries using windows api, linux in the TODO. see below how to get the size of window in linux
-  size = "80%",              -- size of the image in percent
-  center = true,             -- rather or not to center the image in the window
+  size = "80%",  -- size of the image in percent
+  center = true, -- rather or not to center the image in the window
   ----- Important ones -----
 
   ----- Less Important -----
@@ -75,14 +81,7 @@ require('neo-img').setup({
   oil_preview = true, -- changes oil preview of images too
   backend = "auto",   -- auto / kitty / iterm / sixel
   resizeMode = "Fit", -- Fit / Strech / Crop
-  offset = "0x3"      -- that exmp is 0 cells offset x and 3 y. this options is irrelevant when centered
+  offset = "2x3",     -- that exmp is 2 cells offset x and 3 y.
   ----- Less Important -----
 })
 ```  
-
-> [!Important]
-> in order to get the size for the window_size option you can:  
-> write printf "\033[14t" into your terminal  
-> it should return something [4;1080;1920t, that being [4;height;width t  
-> for windows it auto queries the size using the winodws api
-

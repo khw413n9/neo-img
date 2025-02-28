@@ -1,5 +1,5 @@
 # Neo-Img  
-🖼️ A Neovim plugin for viewing images in the terminal. 
+A Neovim plugin for viewing images in the terminal. 
 
 ---
 
@@ -34,35 +34,38 @@ return {
 - you can also call `require("neo-img.utils").display_image(filepath, win)` to display the image in the given window  
 
 ## Configuration ⚙️  
-> document files require 
-><details>
->  <summary>Libreoffice</summary>
-> 
+> document files require Libreoffice  
 >  ```txt
 >    make sure its installed and in your path  
 >    * window: its called soffice and should be in C:\Program Files\LibreOffice\program 
 >    * linux: should be in the path automatically
 >  ```
-> </details>
+
 ```lua
 require('neo-img').setup({
   supported_extensions = {
-    ['png'] = true,
-    ['jpg'] = true,
-    ['jpeg'] = true,
-    ['webp'] = true,
-    ['svg'] = true,
-    ['tiff'] = true,
-    ['tif'] = true,
-    ['docx'] = true,
-    ['xlsx'] = true,
-    ['pdf'] = true,
-    ['pptx'] = true,
+    png = true,
+    jpg = true,
+    jpeg = true,
+    tiff = true,
+    tif = true,
+    svg = true,
+    webp = true,
+    bmp = true,
+    gif = true, -- static only
+    docx = true,
+    xlsx = true,
+    pdf = true,
+    pptx = true,
+    odg = true,
+    odp = true,
+    ods = true,
+    odt = true
   },
+
   ----- Important ones -----
-  window_size = "1920x1080", -- size of the window. in windows auto queries using windows api, linux in the TODO. see below how to get the size of window in linux
-  size = "80%",              -- size of the image in percent
-  center = true,             -- rather or not to center the image in the window
+  size = "80%",  -- size of the image in percent
+  center = true, -- rather or not to center the image in the window
   ----- Important ones -----
 
   ----- Less Important -----
@@ -70,14 +73,7 @@ require('neo-img').setup({
   oil_preview = true, -- changes oil preview of images too
   backend = "auto",   -- auto / kitty / iterm / sixel
   resizeMode = "Fit", -- Fit / Strech / Crop
-  offset = "0x3"      -- that exmp is 0 cells offset x and 3 y. this options is irrelevant when centered
+  offset = "2x3",     -- that exmp is 2 cells offset x and 3 y.
   ----- Less Important -----
 })
 ```  
-
-> [!Important]
-> in order to get the size for the window_size option you can:  
-> write printf "\033[14t" into your terminal  
-> it should return something [4;<height>;<width>t  
-> for windows it auto queries the size using the winodws api
-

@@ -20,14 +20,20 @@ M.defaults = {
     png = true,
     jpg = true,
     jpeg = true,
-    webp = true,
-    svg = true,
     tiff = true,
     tif = true,
+    svg = true,
+    webp = true,
+    bmp = true,
+    gif = true, -- static only
     docx = true,
     xlsx = true,
     pdf = true,
     pptx = true,
+    odg = true,
+    odp = true,
+    ods = true,
+    odt = true
   },
 
   ----- Important ones -----
