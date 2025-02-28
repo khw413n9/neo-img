@@ -1,11 +1,19 @@
+--- @class NeoImg.Image
 local Image = {
+  --- @type integer[]
   watch = {},
+  --- @type table<string, boolean>
   draw = {},
 }
 local tty = require("neo-img.tty")
 
-Image.ns = vim.api.nvim_create_namespace("neo-img")
-
+--- image constructer
+--- @param win integer the win to draw on
+--- @param row integer starting row to draw on
+--- @param col integer starting col to draw on
+--- @param esc string the content to draw
+--- @param watch integer[] bufs to listen for image cleanup
+--- @param id string the id of the img to track if its still drawn
 function Image.Create(win, row, col, esc, watch, id)
   Image.win = win
   Image.row = row
@@ -21,6 +29,7 @@ function Image.Create(win, row, col, esc, watch, id)
   end
 end
 
+--- @return boolean rather or not there is a image to delete
 function Image.Should_Clean()
   for _, draw in pairs(Image.draw) do
     if draw then
@@ -30,6 +39,7 @@ function Image.Should_Clean()
   return false
 end
 
+--- draws the image
 function Image.Draw()
   local move_cursor = string.format("\27[%d;%dH", Image.row, Image.col)
   local image_esc   = "\27[s" .. move_cursor .. Image.esc .. "\27[u"
@@ -37,6 +47,7 @@ function Image.Draw()
   Image.draw[Image.id] = true
 end
 
+--- @return integer[] the bufers to watch for image cleanup
 function Image.get_watch_list()
   local buffers = {}
   if vim.api.nvim_win_is_valid(Image.win) then
@@ -50,11 +61,14 @@ function Image.get_watch_list()
   return buffers
 end
 
+--- prepares image cleanup
 function Image.Prepare()
   local buffers = Image.get_watch_list()
   for _, buf in ipairs(buffers) do
     Image.watch[buf] = 1
+    local group = vim.api.nvim_create_augroup("NeoImg", { clear = false })
     vim.api.nvim_create_autocmd({ "BufWinLeave" }, {
+      group = group,
       buffer = buf,
       once = true,
       callback = function()
@@ -69,6 +83,7 @@ function Image.Prepare()
   end
 end
 
+--- stops jobs to draw an image
 function Image.StopJob()
   if Image.job ~= nil then
     vim.fn.jobstop(Image.job)
@@ -76,6 +91,7 @@ function Image.StopJob()
   end
 end
 
+--- cleans the screen if needed
 function Image.Delete()
   if Image.Should_Clean() then
     vim.api.nvim_command("mode")

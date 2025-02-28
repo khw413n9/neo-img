@@ -1,47 +1,44 @@
+--- @class NeoImg.Autocommands
 local M = {}
-local utils = require("neo-img.utils")
-local Image = require("neo-img.image")
-local main_config = require("neo-img.config")
+local utils = require "neo-img.utils"
+local Image = require "neo-img.image"
+local main_config = require "neo-img.config"
+local others = require "neo-img.others"
 
+--- setups the main autocommands
 local function setup_main(config)
+  local patterns = {}
+  for ext, _ in pairs(config.supported_extensions) do
+    table.insert(patterns, "*." .. ext)
+  end
+
+  local group = vim.api.nvim_create_augroup("NeoImg", { clear = true })
+
   -- lock bufs on read
   vim.api.nvim_create_autocmd({ "BufRead" }, {
-    pattern = "*",
+    group = group,
+    pattern = patterns,
     callback = function(ev)
-      local filepath = vim.api.nvim_buf_get_name(ev.buf)
-      if filepath == "" then return end
-      local ext = utils.get_extension(filepath)
-      if ext and config.supported_extensions[ext:lower()] then
-        utils.lock_buf(ev.buf)
-      end
+      utils.lock_buf(ev.buf)
     end
   })
 
-  -- preview image on buf win enter
-  vim.api.nvim_create_autocmd({ "BufWinEnter" }, {
-    pattern = "*",
+  -- preview image on buf enter
+  vim.api.nvim_create_autocmd({ "BufEnter" }, {
+    group = group,
+    pattern = patterns,
     callback = function(ev)
       Image.StopJob()
-      vim.defer_fn(function()
+      vim.schedule(function()
         local filepath = vim.api.nvim_buf_get_name(ev.buf)
-        -- oil doesn't name its buffers, im also disabling preview so..
-        if filepath == "" then
-          filepath = utils.get_oil_filepath()
-        end
-        local ext = utils.get_extension(filepath)
-
-        if ext and config.supported_extensions[ext:lower()] then
-          local win = vim.fn.bufwinid(ev.buf)
-          -- show only on win that are at least 30% xy. stops random wins from getting images on them lol
-          if utils.is_window_large_enough(win) then
-            utils.display_image(filepath, win)
-          end
-        end
-      end, 10)
+        local win = vim.fn.bufwinid(ev.buf)
+        utils.display_image(filepath, win)
+      end)
     end
   })
 end
 
+--- setups the api
 local function setup_api()
   local config = main_config.get()
   vim.api.nvim_create_user_command('NeoImg', function(opts)
@@ -68,14 +65,15 @@ local function setup_api()
   })
 end
 
-function M:setup()
+--- setups all the autocommands for neo-img
+function M.setup()
   local config = main_config.get()
   vim.g.zipPlugin_ext = "zip" -- showing image so no need for unzip
   if config.auto_open then
     setup_main(config)
   end
   if config.oil_preview then
-    utils.setup_oil() -- disables preview for files that im already showing image preview
+    others.setup_oil() -- disables preview for files that im already showing image preview
   end
   setup_api()
 end

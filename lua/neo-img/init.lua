@@ -1,41 +1,26 @@
 local M = {}
 local config = require('neo-img.config')
 local autocmds = require("neo-img.autocommands")
+local utils = require("neo-img.utils")
 
+--- setups the plugin
 function M.setup(opts)
   opts = opts or {}
   config.setup(opts)
-  autocmds:setup()
+  config.get().window_size = utils.get_window_size_fallback()
+  autocmds.setup()
 end
 
+--- installs ttyimg, which is a dependency for the plugin
 function M.install()
   local target_dir = config.get_bin_dir()
 
-  local uname = vim.loop.os_uname()
-  local os, arch = uname.sysname:lower(), uname.machine
-
-  -- Normalize OS name
-  if os:find("linux") then
-    os = "linux"
-  elseif os:find("darwin") then
-    os = "darwin"
-  elseif os:find("windows") then
-    os = "windows"
-  else
+  local os, arch, osOk, archOk = require("neo-img.utils").get_os_arch()
+  if not osOk then
     print("Unsupported OS: " .. os)
     return
   end
-
-  -- Normalize Architecture
-  if arch == "x86_64" then
-    arch = "amd64"
-  elseif arch == "aarch64" then
-    arch = "arm64"
-  elseif arch:find("arm") then
-    arch = "arm"
-  elseif arch:find("i386") or arch:find("i686") then
-    arch = "386"
-  else
+  if not archOk then
     print("Unsupported architecture: " .. arch)
     return
   end
