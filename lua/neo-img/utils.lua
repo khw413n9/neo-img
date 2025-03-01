@@ -205,17 +205,6 @@ local function draw_image(win, row, col, output, filepath)
   Image.Draw()
 end
 
---- removes leading spaces
---- @param str string the string to remove from
---- @return string trimmed_str
---- @return integer count how many spaces removed
-local function remove_leading_spaces(str)
-  local leading_spaces = str:match("^%s*") -- Get leading spaces
-  local count = #leading_spaces            -- Count the length of leading spaces
-  local trimmed_str = str:sub(count + 1)   -- Remove leading spaces
-  return trimmed_str, count
-end
-
 --- draws the image
 --- @param filepath string the image to draw
 --- @param win integer the window id to draw on
@@ -253,8 +242,7 @@ function M.display_image(filepath, win)
           vim.notify("error: " .. output)
           return
         end
-        local img_esc, spaces_count = remove_leading_spaces(output)
-        draw_image(win, opts.offset.y, opts.offset.x + spaces_count, img_esc, filepath)
+        draw_image(win, opts.offset.y, opts.offset.x, output, filepath)
       end
     end,
     stdout_buffered = true

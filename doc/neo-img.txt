@@ -13,7 +13,7 @@ A Neovim plugin for viewing images in the terminal.
 > uses [ttyimg](https://github.com/Skardyy/ttyimg)  
 > you can install it in 2 ways:  
 > * via `:NeoImg Install` **(recommended)**
-> * globally via `go install github.com/Skardyy/ttyimg@latest`, make sure you have GOPATH in your path `export PATH="$HOME/go/bin:$PATH`
+> * globally via `go install github.com/Skardyy/ttyimg@v1.0.5`, make sure you have GOPATH in your path `export PATH="$HOME/go/bin:$PATH`
 
 Using lazy.nvim:
 ```lua
@@ -74,6 +74,17 @@ require('neo-img').setup({
   backend = "auto",   -- auto / kitty / iterm / sixel
   resizeMode = "Fit", -- Fit / Strech / Crop
   offset = "2x3",     -- that exmp is 2 cells offset x and 3 y.
+  ttyimg = "local"    -- local / global
   ----- Less Important -----
 })
 ```  
+
+* supported_extensions: the extension of file to replace with an image.
+* size: size of the image compared to the window in percent, must be percent!
+* center: centers the image in x axis inside the window.
+* auto_open: auto replaces buffers with images. replaces calling :NeoImg DisplayImage every time. only relevant for buffers and not oil!
+* oil_preview: replaces oil preview of supported extensions into images. don't use outdated oil version :(
+* backend: enforces a graphic protocol if the auto fails to match.
+* resizeMode: the resize mode to apply on the size.
+* offset: offset from the window top left. works in addition to the center option!
+* ttyimg: enforces different installation of ttyimg. global is from go, local is from :NeoImg Install. some PCs may not have supported precompiled binary from ttyimg, so the global installation can solve that.

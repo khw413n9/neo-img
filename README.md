@@ -18,7 +18,7 @@ https://github.com/user-attachments/assets/f7c76789-d57f-437c-b4da-444eebb7eb20
 > uses [ttyimg](https://github.com/Skardyy/ttyimg)  
 > you can install it in 2 ways:  
 > * via `:NeoImg Install` **(recommended)**
-> * globally via `go install github.com/Skardyy/ttyimg@latest`, make sure you have GOPATH in your path `export PATH="$HOME/go/bin:$PATH`
+> * globally via `go install github.com/Skardyy/ttyimg@v1.0.5`, make sure you have GOPATH in your path `export PATH="$HOME/go/bin:$PATH`
 
 Using lazy.nvim:
 ```lua
@@ -37,6 +37,7 @@ return {
 - Images will automatically preview when opening supported files  
 - Use `:NeoImg DisplayImage` to manually display the current file  
 - you can also call `require("neo-img.utils").display_image(filepath, win)` to display the image in the given window  
+- you can also call `:checkhealth neo-img` to see if there is any issues  
 
 ## Configuration ⚙️  
 > document files require 
@@ -82,6 +83,7 @@ require('neo-img').setup({
   backend = "auto",   -- auto / kitty / iterm / sixel
   resizeMode = "Fit", -- Fit / Strech / Crop
   offset = "2x3",     -- that exmp is 2 cells offset x and 3 y.
+  ttyimg = "local"    -- local / global
   ----- Less Important -----
 })
 ```  
