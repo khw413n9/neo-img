@@ -2,10 +2,11 @@ local M = {}
 local utils = require "neo-img.utils"
 local main_config = require "neo-img.config"
 
---- @return integer? win the win that is oil preview
+--- @return integer? win the first other win in the same tab
 local function get_first_other_win()
   local current_win = vim.api.nvim_get_current_win()
-  local all_wins = vim.api.nvim_list_wins()
+  local current_tab = vim.api.nvim_get_current_tabpage()
+  local all_wins = vim.api.nvim_tabpage_list_wins(current_tab)
 
   for _, win in ipairs(all_wins) do
     if win ~= current_win then
@@ -13,7 +14,7 @@ local function get_first_other_win()
     end
   end
 
-  return nil -- No other windows found
+  return nil -- No other windows found in the same tab
 end
 
 --- enables drawing supported_extensions instead of normal oil-preview

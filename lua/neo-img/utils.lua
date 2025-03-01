@@ -180,14 +180,18 @@ local function build_command(filepath, opts)
   return command
 end
 
---- @return integer? buf the main oil buf
+--- @return integer? buf the main oil buf in the current tab
 local function get_oil_buf()
-  for _, win in ipairs(vim.api.nvim_list_wins()) do
+  local current_tab = vim.api.nvim_get_current_tabpage()
+  local all_wins = vim.api.nvim_tabpage_list_wins(current_tab)
+
+  for _, win in ipairs(all_wins) do
     local buf = vim.api.nvim_win_get_buf(win)
     if vim.bo[buf].filetype == "oil" then
       return buf
     end
   end
+
   return nil
 end
 

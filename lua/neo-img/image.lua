@@ -67,7 +67,7 @@ function Image.Prepare()
   for _, buf in ipairs(buffers) do
     Image.watch[buf] = 1
     local group = vim.api.nvim_create_augroup("NeoImg", { clear = false })
-    vim.api.nvim_create_autocmd({ "BufWinLeave" }, {
+    vim.api.nvim_create_autocmd({ "BufWinLeave", "WinLeave" }, {
       group = group,
       buffer = buf,
       once = true,
