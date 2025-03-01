@@ -90,13 +90,63 @@ end
 ---@param opts? NeoImg.Config Custom user options
 function M.setup(opts)
   config.bin_path = M.get_bin_path()
-  config = vim.tbl_deep_extend('force', M.defaults, opts or {})
+  local new_opts = opts and M.validate_config(opts) or {}
+  config = vim.tbl_deep_extend('force', M.defaults, new_opts)
 end
 
 --- Get the current configuration
 ---@return NeoImg.Config config The current configuration table
 function M.get()
   return config
+end
+
+--- Validates and corrects a given NeoImg.Config table.
+---@param opts NeoImg.Config The configuration table to validate.
+---@return NeoImg.Config opts The validated and corrected configuration.
+function M.validate_config(opts)
+  local defaults = M.defaults
+
+  if type(opts) ~= "table" then
+    return vim.deepcopy(defaults)
+  end
+
+  local function is_valid_percentage(value)
+    return type(value) == "string" and value:match("^%d+%%$")
+  end
+
+  local function is_valid_boolean(value)
+    return type(value) == "boolean"
+  end
+
+  local function is_valid_backend(value)
+    return value == "auto" or value == "kitty" or value == "iterm" or value == "sixel"
+  end
+
+  local function is_valid_resize_mode(value)
+    return value == "Fit" or value == "Stretch" or value == "Crop"
+  end
+
+  local function is_valid_offset(value)
+    return type(value) == "string" and value:match("^%d+x%d+$")
+  end
+
+  local validated_config = {}
+
+  validated_config.supported_extensions = type(opts.supported_extensions) == "table" and opts.supported_extensions or
+      defaults.supported_extensions
+  validated_config.size = is_valid_percentage(opts.size) and opts.size or defaults.size
+  validated_config.center = is_valid_boolean(opts.center) and opts.center or defaults.center
+  validated_config.auto_open = is_valid_boolean(opts.auto_open) and opts.auto_open or defaults.auto_open
+  validated_config.oil_preview = is_valid_boolean(opts.oil_preview) and opts.oil_preview or defaults.oil_preview
+  validated_config.backend = is_valid_backend(opts.backend) and opts.backend or defaults.backend
+  validated_config.resizeMode = is_valid_resize_mode(opts.resizeMode) and opts.resizeMode or defaults.resizeMode
+  validated_config.offset = is_valid_offset(opts.offset) and opts.offset or defaults.offset
+
+  validated_config.bin_path = type(opts.bin_path) == "string" and opts.bin_path or nil
+  validated_config.os = type(opts.os) == "string" and opts.os or nil
+  validated_config.window_size = type(opts.window_size) == "table" and opts.window_size or nil
+
+  return validated_config
 end
 
 return M

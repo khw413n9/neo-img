@@ -85,7 +85,7 @@ function M.get_window_size_fallback()
 end
 
 --- Normalizes the size of the img
---- @return string size
+--- @return string value
 local function get_scale_factor(value)
   local numberString = value:gsub("%%", "")
   local number = tonumber(numberString)
