@@ -23,6 +23,7 @@ function M.setup_oil()
   if not status_ok then return end
 
   if oil.preview_win ~= nil then
+    local pre_dis_fn = oil.preview_win.disable_preview
     oil.preview_win.disable_preview = function(filepath)
       local ext = utils.get_extension(filepath)
       if main_config.get().supported_extensions[ext] then
@@ -32,6 +33,11 @@ function M.setup_oil()
           utils.display_image(filepath, win)
         end)
         return true
+      end
+      if pre_dis_fn then
+        return pre_dis_fn(filepath)
+      else
+        return false
       end
     end
   end

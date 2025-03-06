@@ -15,13 +15,13 @@ end
 function M.install()
   local target_dir = config.get_bin_dir()
 
-  local os, arch, osOk, archOk = require("neo-img.utils").get_os_arch()
-  if not osOk then
-    print("Unsupported OS: " .. os)
+  local os, arch = require("neo-img.utils").get_os_arch()
+  if os == nil then
+    print("Unsupported OS")
     return
   end
-  if not archOk then
-    print("Unsupported architecture: " .. arch)
+  if arch == nil then
+    print("Unsupported cpu architecture")
     return
   end
 
@@ -32,7 +32,8 @@ function M.install()
   end
 
   -- Download URL
-  local url = "https://github.com/Skardyy/ttyimg/releases/latest/download/" .. filename
+  local version = "v" .. config.get().ttyimg_version
+  local url = "https://github.com/Skardyy/ttyimg/releases/download/" .. version .. "/" .. filename
   local output_path = target_dir .. "/ttyimg" .. (os == "windows" and ".exe" or "")
 
   -- Check if curl or wget is available

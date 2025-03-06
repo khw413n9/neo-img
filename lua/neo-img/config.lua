@@ -13,6 +13,7 @@ local M = {}
 --- @field bin_path? string Path to the ttyimg binary (populated at runtime)
 --- @field os? string the OS of the machine (populated at runtime)
 --- @field window_size? {spx: NeoImg.Size, sc: NeoImg.Size} window size fallbacks in px and cells (populated at runtime)
+--- @field ttyimg_version? string the version of ttyimg to scope to (populated at runtime)
 
 --- Default configuration
 ---@type NeoImg.Config
@@ -104,6 +105,7 @@ end
 --- Setup function to initialize the configuration
 ---@param opts? NeoImg.Config Custom user options
 function M.setup(opts)
+  config.ttyimg_version = "1.0.5"
   config.bin_path = M.get_bin_path()
   local new_opts = opts and M.validate_config(opts) or {}
   config = vim.tbl_deep_extend('force', M.defaults, new_opts)

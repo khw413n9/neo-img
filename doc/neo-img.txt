@@ -19,9 +19,7 @@ Using lazy.nvim:
 ```lua
 return {
     'skardyy/neo-img',
-    build = function()
-        require("neo-img").install()
-    end,
+    build = ":NeoImg Install",
     config = function()
         require('neo-img').setup()
     end

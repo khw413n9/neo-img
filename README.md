@@ -24,9 +24,7 @@ Using lazy.nvim:
 ```lua
 return {
     'skardyy/neo-img',
-    build = function()
-        require("neo-img").install()
-    end,
+    build = ":NeoImg Install",
     config = function()
         require('neo-img').setup()
     end
@@ -37,7 +35,6 @@ return {
 - Images will automatically preview when opening supported files  
 - Use `:NeoImg DisplayImage` to manually display the current file  
 - you can also call `require("neo-img.utils").display_image(filepath, win)` to display the image in the given window  
-- you can also call `:checkhealth neo-img` to see if there is any issues  
 
 ## Configuration ⚙️  
 > document files require 

@@ -4,40 +4,34 @@ local Image = require("neo-img.image")
 local main_config = require("neo-img.config")
 
 --- returns the os and arch
---- @return string os the OS of the machine
---- @return string arch the arch of the cpu
---- @return boolean osOk if the os is supported
---- @return boolean archOk if the arch is supported
+--- @return "windows"|"linux"|"darwin" os the OS of the machine
+--- @return "386"|"amd64"|"arm"|"arm64" arch the arch of the cpu
 function M.get_os_arch()
-  local uname = vim.loop.os_uname()
-  local os, arch = uname.sysname:lower(), uname.machine
-  local osOk, archOk = true, true
+  local os_mapper = {
+    Windows = "windows",
+    Linux = "linux",
+    OSX = "darwin",
+    BSD = nil,
+    POSIX = nil,
+    Other = nil
+  }
 
-  -- Normalize OS name
-  if os:find("linux") then
-    os = "linux"
-  elseif os:find("darwin") then
-    os = "darwin"
-  elseif os:find("windows") then
-    os = "windows"
-  else
-    osOk = false
-  end
+  local arch_mapper = {
+    x86 = "386",
+    x64 = "amd64",
+    arm = "arm",
+    arm64 = "arm64",
+    arm64be = nil,
+    ppc = nil,
+    mips = nil,
+    mipsel = nil,
+    mips64 = nil,
+    mips64el = nil,
+    mips64r6 = nil,
+    mips64r6el = nil
+  }
 
-  -- Normalize Architecture
-  if arch == "x86_64" then
-    arch = "amd64"
-  elseif arch == "aarch64" then
-    arch = "arm64"
-  elseif arch:find("arm") then
-    arch = "arm"
-  elseif arch:find("i386") or arch:find("i686") then
-    arch = "386"
-  else
-    archOk = false
-  end
-
-  return os, arch, osOk, archOk
+  return os_mapper[jit.os], arch_mapper[jit.arch]
 end
 
 --- @class NeoImg.Size
