@@ -23,7 +23,7 @@ function M.check()
     vim.health.ok("ttyimg is installed and working correctly")
     vim.health.info("Validation output:\n" .. result)
     local backend_enf = config.backend == "auto" and "None" or config.backend
-    vim.health.ok("backend enforcment: " .. backend_enf)
+    vim.health.ok("backend enforcement: " .. backend_enf)
     vim.health.ok("fallback: " .. "sixel")
   else
     local install_message =
