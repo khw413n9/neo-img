@@ -7,7 +7,7 @@ local Image = {
 }
 local tty = require("neo-img.tty")
 
---- image constructer
+--- image constructor
 --- @param win integer the win to draw on
 --- @param row integer starting row to draw on
 --- @param col integer starting col to draw on
@@ -47,7 +47,7 @@ function Image.Draw()
   Image.draw[Image.id] = true
 end
 
---- @return integer[] the bufers to watch for image cleanup
+--- @return integer[] the buffers to watch for image cleanup
 function Image.get_watch_list()
   local buffers = {}
   if vim.api.nvim_win_is_valid(Image.win) then

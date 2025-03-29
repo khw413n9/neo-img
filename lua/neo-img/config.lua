@@ -47,7 +47,7 @@ M.defaults = {
   auto_open = true,   -- Automatically open images when buffer is loaded
   oil_preview = true, -- changes oil preview of images too
   backend = "auto",   -- auto / kitty / iterm / sixel
-  resizeMode = "Fit", -- Fit / Strech / Crop
+  resizeMode = "Fit", -- Fit / Stretch / Crop
   offset = "2x3",     -- that exmp is 2 cells offset x and 3 y.
   ttyimg = "local"    -- local / global
   ----- Less Important -----
