@@ -4,6 +4,7 @@ local utils = require "neo-img.utils"
 local Image = require "neo-img.image"
 local main_config = require "neo-img.config"
 local others = require "neo-img.others"
+local profiler = require "neo-img.profiler"
 local uv = vim.uv or vim.loop
 local timer
 local lastkey
@@ -24,17 +25,21 @@ local function setup_main(config)
         callback = function(ev) utils.lock_buf(ev.buf) end
     })
 
-    -- preview image on buf enter
-    vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
+    -- preview image on buffer window enter (BufEnter removed to avoid double trigger)
+    vim.api.nvim_create_autocmd({"BufWinEnter"}, {
         group = group,
         pattern = patterns,
         callback = function(ev)
-            Image.StopJob()
-            vim.schedule(function()
-                local filepath = vim.api.nvim_buf_get_name(ev.buf)
-                local win = vim.fn.bufwinid(ev.buf)
-                utils.display_image(filepath, win)
-            end)
+            profiler.record('event_start', {buf = ev.buf})
+            -- NOTE: Immediate scheduled draw path disabled for now to eliminate
+            -- duplicate job_start events. Leaving code commented for quick restore.
+            -- Image.StopJob()
+            -- vim.schedule(function()
+            --     profiler.record('scheduled_start', {})
+            --     local filepath = vim.api.nvim_buf_get_name(ev.buf)
+            --     local win = vim.fn.bufwinid(ev.buf)
+            --     utils.display_image(filepath, win)
+            -- end)
 
             Image.StopJob()
             -- cancel previous pending draw
@@ -52,6 +57,7 @@ local function setup_main(config)
             lastkey = key
             timer = uv.new_timer()
             timer:start(60, 0, function()
+                profiler.record('timer_fire', {})
                 vim.schedule(function()
                     -- revalidate just before drawing
                     local w = utils.win_of_buf(buf)
@@ -84,10 +90,19 @@ local function setup_api()
             else
                 vim.notify("invalid path for image: " .. buf_name)
             end
+        elseif command_name == 'Debug' then
+            local profiler = require('neo-img.profiler')
+            local lines = profiler.format()
+            if #lines == 0 then
+                print('NeoImg: no debug entries (enable config.debug)')
+                return
+            end
+            print('NeoImg timeline:')
+            for _, l in ipairs(lines) do print(l) end
         end
     end, {
         nargs = 1,
-        complete = function() return {'Install', 'DisplayImage'} end
+        complete = function() return {'Install', 'DisplayImage', 'Debug'} end
     })
 end
 

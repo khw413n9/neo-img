@@ -10,6 +10,8 @@ local M = {}
 --- @field resizeMode "Fit"|"Stretch"|"Crop" Resize mode for images
 --- @field offset string Offset for positioning (e.g., "0x3")
 --- @field ttyimg "local"|"global" which ttyimg is preferred
+--- @field debug boolean enable debug instrumentation
+--- @field debounce_ms integer debounce (ms) before drawing after events
 --- @field bin_path? string Path to the ttyimg binary (populated at runtime)
 --- @field os? string the OS of the machine (populated at runtime)
 --- @field window_size? {spx: NeoImg.Size, sc: NeoImg.Size} window size fallbacks in px and cells (populated at runtime)
@@ -49,7 +51,9 @@ M.defaults = {
   backend = "auto",   -- auto / kitty / iterm / sixel
   resizeMode = "Fit", -- Fit / Stretch / Crop
   offset = "2x3",     -- that exmp is 2 cells offset x and 3 y.
-  ttyimg = "local"    -- local / global
+  ttyimg = "local",   -- local / global
+  debug = false,       -- instrumentation disabled by default
+  debounce_ms = 60,    -- initial debounce (ms)
   ----- Less Important -----
 }
 
@@ -171,6 +175,8 @@ function M.validate_config(opts)
     resizeMode = is_valid_resize_mode(opts.resizeMode) and opts.resizeMode or defaults.resizeMode,
     offset = is_valid_offset(opts.offset) and opts.offset or defaults.offset,
     ttyimg = is_valid_ttyimg(opts.ttyimg) and opts.ttyimg or defaults.ttyimg,
+  debug = is_valid_boolean(opts.debug) and opts.debug or defaults.debug,
+  debounce_ms = type(opts.debounce_ms) == "number" and opts.debounce_ms or defaults.debounce_ms,
 
     bin_path = type(opts.bin_path) == "string" and opts.bin_path or nil,
     os = type(opts.os) == "string" and opts.os or nil,

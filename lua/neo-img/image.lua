@@ -4,6 +4,10 @@ local Image = {
   watch = {},
   --- @type table<string, boolean>
   draw = {},
+  --- in-flight job marker
+  inflight = false,
+  --- last drawn identity key
+  last_key = nil,
 }
 local tty = require("neo-img.tty")
 
@@ -89,6 +93,7 @@ function Image.StopJob()
     vim.fn.jobstop(Image.job)
     Image.job = nil
   end
+  Image.inflight = false
 end
 
 --- cleans the screen if needed

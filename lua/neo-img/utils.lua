@@ -2,6 +2,7 @@
 local M = {}
 local Image = require("neo-img.image")
 local main_config = require("neo-img.config")
+local profiler = require("neo-img.profiler")
 
 --- returns the os and arch
 --- @return "windows"|"linux"|"darwin" os the OS of the machine
@@ -86,12 +87,23 @@ end
 --- @return integer window id
 function M.win_of_buf(buf)
     buf = buf or 0
-    local win = vim.fn.bufwinid(buf)
+    -- NOTE: vim.fn.bufwinid() is a Vimscript function and may raise E5560
+    -- (must not be called in a fast event context). To be safe in timer/libuv
+    -- callbacks we re‑implement a lightweight search.
+    local win = -1
+    for _, w in ipairs(vim.api.nvim_list_wins()) do
+        if vim.api.nvim_win_is_valid(w) and vim.api.nvim_win_get_buf(w) == buf then
+            win = w
+            break
+        end
+    end
     if win == -1 or win == 0 then return -1 end
     if not vim.api.nvim_win_is_valid(win) then return -1 end
     local cfg = vim.api.nvim_win_get_config(win)
     if cfg and cfg.relative ~= "" then return -1 end
-    if vim.bo[buf].buftype ~= "" then return -1 end
+    -- Allow empty buftype (normal) and 'nofile' (we intentionally set this in lock_buf)
+    local bt = vim.bo[buf].buftype
+    if bt ~= "" and bt ~= "nofile" then return -1 end
     return win
 end
 
@@ -108,6 +120,15 @@ end
 --- @return {spx: string, sc: string, size: string, scale: string, offset: NeoImg.Size}
 function M.get_dims(win)
     local config = main_config.get()
+    -- lazily initialize window_size if missing
+    if not config.window_size then
+        pcall(function()
+            config.window_size = M.get_window_size_fallback()
+        end)
+        if not (config.window_size and config.window_size.spx and config.window_size.sc) then
+            return {}
+        end
+    end
 
     -- local row, col = unpack(vim.api.nvim_win_get_position(win))
 
@@ -221,14 +242,26 @@ function M.display_image(filepath, win)
         return
     end
 
-    local opts = M.get_dims(win)
-    
-    -- guard invalid window and fallback once
-    if not M.is_normal_win(win) then win = M.win_of_buf(0) end
-    local opts = M.get_dims(win)
-    if not opts then
-        return -- quietly skip when window is invalid or not ready
+    -- normalize window first
+    if not M.is_normal_win(win) then
+        win = M.win_of_buf(0)
     end
+    local opts = M.get_dims(win)
+    if not (opts and opts.spx and opts.sc and opts.scale and opts.size and opts.offset) then
+        return -- window/layout not ready yet
+    end
+
+    -- Build identity key (filepath + size relevant params) to skip redundant redraws
+    local identity_key = table.concat({filepath, opts.spx, opts.sc, opts.scale, opts.size, opts.offset.x, opts.offset.y}, '::')
+    if Image.last_key == identity_key and Image.inflight == false then
+        -- already drawn with same parameters
+        return
+    end
+    -- If a job is currently running for the exact same identity, skip starting another
+    if Image.inflight and Image.last_key == identity_key then
+        return
+    end
+    Image.last_key = identity_key
 
     local command = build_command(filepath, {
         spx = opts.spx,
@@ -238,7 +271,11 @@ function M.display_image(filepath, win)
         height = opts.size
     })
 
-    Image.Delete()
+    Image.Delete() -- clears previous image (will also reset inflight)
+    Image.inflight = true
+    -- Safe concat (defensive) in case any element became nil unexpectedly
+    local ok_cmd, joined = pcall(function() return table.concat(command, ' ') end)
+    profiler.record('job_start', {cmd = ok_cmd and joined or 'N/A'})
     Image.job = vim.fn.jobstart(command, {
         on_stdout = function(_, data)
             if data then
@@ -250,7 +287,9 @@ function M.display_image(filepath, win)
                     vim.notify("error: " .. output)
                     return
                 end
+                profiler.record('draw_ready', {size = #output})
                 draw_image(win, opts.offset.y, opts.offset.x, output, filepath)
+                Image.inflight = false
             end
         end,
         stdout_buffered = true
