@@ -25,7 +25,7 @@ local function setup_main(config)
     })
 
     -- preview image on buf enter
-    vim.api.nvim_create_autocmd({"BufEnter", "BunWinEnter"}, {
+    vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
         group = group,
         pattern = patterns,
         callback = function(ev)
