@@ -1,3 +1,11 @@
+---
+--- Autocommand + user command wiring for Neo-Img.
+--- Contains:
+---  * BufRead   -> lock image buffers (avoid accidental edits / writes)
+---  * BufWinEnter (debounced) -> trigger image preview render
+---  * :NeoImg Install / DisplayImage / Debug
+--- NOTE: We intentionally only use BufWinEnter to avoid duplicate triggers.
+---
 --- @class NeoImg.Autocommands
 local M = {}
 local utils = require "neo-img.utils"
@@ -25,12 +33,13 @@ local function setup_main(config)
         callback = function(ev) utils.lock_buf(ev.buf) end
     })
 
-    -- preview image on buffer window enter (BufEnter removed to avoid double trigger)
+    -- Preview image on buffer window enter.
+    -- (BufEnter removed previously to avoid duplicate render chains.)
     vim.api.nvim_create_autocmd({"BufWinEnter"}, {
         group = group,
         pattern = patterns,
         callback = function(ev)
-            profiler.record('event_start', {buf = ev.buf})
+            profiler.record('event_start', {buf = ev.buf}) -- instrumentation root
             -- NOTE: Immediate scheduled draw path disabled for now to eliminate
             -- duplicate job_start events. Leaving code commented for quick restore.
             -- Image.StopJob()
@@ -42,7 +51,7 @@ local function setup_main(config)
             -- end)
 
             Image.StopJob()
-            -- cancel previous pending draw
+            -- Cancel previous pending draw (typical debounce pattern)
             if timer then
                 pcall(timer.stop, timer);
                 pcall(timer.close, timer);
@@ -56,11 +65,11 @@ local function setup_main(config)
             if key == lastkey then return end
             lastkey = key
             timer = uv.new_timer()
-            timer:start(60, 0, function()
+            timer:start(config.debounce_ms or 60, 0, function()
                 profiler.record('timer_fire', {})
                 vim.schedule(function()
                     -- revalidate just before drawing
-                    local w = utils.win_of_buf(buf)
+                    local w = utils.win_of_buf(buf) -- re-validate window existence
                     if not w or w ~= win then return end
                     if vim.api.nvim_buf_get_name(buf) ~= filepath then
                         return

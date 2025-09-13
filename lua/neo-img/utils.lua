@@ -1,3 +1,17 @@
+---
+--- Utility helpers for Neo-Img.
+--- Responsibilities:
+---  * window detection & validation (fast-event safe)
+---  * dimension calculation & fallback size probing
+---  * output cache (memory, LRU-like by timestamp)
+---  * backend resolution
+---  * drawing orchestration + job lifecycle guards
+---
+--- Cache strategy:
+---  key = filepath + geometry (spx/sc/scale/size/offset)
+---  value = raw terminal escape sequence (sixel/kitty)
+---  eviction: size-based; oldest timestamp first
+---
 --- @class NeoImg.Utils
 local M = {}
 local Image = require("neo-img.image")
@@ -27,6 +41,9 @@ local function cache_evict(max_bytes)
     cache_store.order = new_order
 end
 
+--- Attempt to fetch cached output
+--- @param key string
+--- @param cfg NeoImg.Config
 local function cache_get(key, cfg)
     if not cfg.cache or not cfg.cache.enabled then return nil end
     local it = cache_store.items[key]
@@ -39,6 +56,10 @@ local function cache_get(key, cfg)
     return nil
 end
 
+--- Store output in cache (guarding size & eviction)
+--- @param key string
+--- @param data string
+--- @param cfg NeoImg.Config
 local function cache_put(key, data, cfg)
     if not cfg.cache or not cfg.cache.enabled then return end
     local bytes = #data
@@ -93,6 +114,7 @@ end
 
 --- returns a window size for fallback
 --- @return {spx: NeoImg.Size, sc: NeoImg.Size}
+--- Probe / approximate terminal pixel & cell size.
 function M.get_window_size_fallback()
     local config = main_config.get()
     local os = M.get_os_arch()
@@ -137,6 +159,7 @@ end
 --- return a valid "normal" window for a buffer, or nil
 --- @param buf integer buffer id
 --- @return integer window id
+--- Find a "normal" (non-floating, non-special) window showing buffer.
 function M.win_of_buf(buf)
     buf = buf or 0
     -- NOTE: vim.fn.bufwinid() is a Vimscript function and may raise E5560
@@ -170,6 +193,7 @@ end
 --- Calculates dimensions for the image in the given win
 --- @param win integer window id
 --- @return {spx: string, sc: string, size: string, scale: string, offset: NeoImg.Size}
+--- Compute geometric parameters used in ttyimg command and drawing.
 function M.get_dims(win)
     local config = main_config.get()
     -- lazily initialize window_size if missing
@@ -234,6 +258,7 @@ function M.get_extension(filename) return filename:match("^.+%.(.+)$") end
 --- @param opts {spx: string, sc: string, scale: string, width: string, height: string}
 --- @return table
 -- backend resolver (initial simple: only ttyimg)
+--- Resolve backend implementation module.
 local function resolve_backend(config)
     -- future: inspect config.backend for selecting other modules
     return require('neo-img.backends.ttyimg')
@@ -258,6 +283,7 @@ end
 --- @param col integer the starting col
 --- @param output string the content of the image
 --- @param filepath string the filepath to use as id
+--- Create + prepare + draw image using Image module.
 local function draw_image(win, row, col, output, filepath)
     local config = main_config.get()
     local watch = config.oil_preview and {get_oil_buf()} or {}
@@ -269,6 +295,8 @@ end
 --- draws the image
 --- @param filepath string the image to draw
 --- @param win integer the window id to draw on
+--- Public display entrypoint.
+--- Decides fast-path (cache) vs spawning external job.
 function M.display_image(filepath, win)
     local config = main_config.get()
 

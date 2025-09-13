@@ -1,3 +1,8 @@
+---
+--- Lightweight instrumentation ring buffer.
+--- Used only when config.debug = true to keep overhead negligible.
+--- Add new stages sparingly; timeline aims to stay human-parsable.
+---
 local M = {}
 local config = require('neo-img.config')
 
@@ -15,6 +20,7 @@ end
 --- Record an instrumentation point
 --- @param stage string
 --- @param data table|nil
+--- Record a profiling stage entry (no-op if debug disabled)
 function M.record(stage, data)
   if not config.get().debug then return end
   local ts = now()
@@ -25,11 +31,13 @@ function M.record(stage, data)
 end
 
 --- Return a copy of entries
+--- Return deep copy of current entries
 function M.get_entries()
   return vim.deepcopy(state.entries)
 end
 
 --- Format timeline differences
+--- Format entries into aligned human readable timeline lines
 function M.format()
   local out = {}
   local prev = nil

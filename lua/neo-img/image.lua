@@ -1,3 +1,13 @@
+---
+--- Runtime state & low-level rendering helpers.
+--- Image module keeps ephemeral data for one active image at a time.
+--- Lifecycle:
+---  * Create() sets target win/pos + escape sequence
+---  * Prepare() sets up BufLeave autocmd for cleanup
+---  * Draw() writes escape sequence (sixel/kitty) to terminal
+---  * Delete()/StopJob() handles cleanup & job cancellation
+--- in-flight state is controlled from utils.display_image.
+---
 --- @class NeoImg.Image
 local Image = {
   --- @type integer[]
@@ -88,6 +98,7 @@ function Image.Prepare()
 end
 
 --- stops jobs to draw an image
+--- Stop the external job (if any) and reset inflight flag.
 function Image.StopJob()
   if Image.job ~= nil then
     vim.fn.jobstop(Image.job)
@@ -99,6 +110,7 @@ function Image.StopJob()
 end
 
 --- cleans the screen if needed
+--- Clear drawn image from screen (by forcing a mode refresh) & stop job.
 function Image.Delete()
   if Image.Should_Clean() then
     vim.api.nvim_command("mode")

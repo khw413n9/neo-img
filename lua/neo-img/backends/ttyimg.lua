@@ -1,3 +1,4 @@
+--- ttyimg backend descriptor (default backend)
 local M = {}
 
 -- backend descriptor for ttyimg
@@ -10,6 +11,7 @@ M.protocols = { auto = true, kitty = true, iterm = true, sixel = true }
 -- @param opts {spx:string, sc:string, scale:string, width:string, height:string}
 -- @param config NeoImg.Config
 -- @return table cmd, string protocol
+--- Build ttyimg command arguments & chosen protocol
 function M.build(filepath, opts, config)
   local protocol = 'auto'
   if M.protocols[config.backend] and config.backend ~= 'auto' then

@@ -1,9 +1,19 @@
+---
+--- Neo-Img public entrypoint
+--- Responsibilities:
+---  * Merge user configuration with defaults
+---  * Capture initial window size fallback (pixels + cells)
+---  * Register autocommands and user commands
+---  * Provide a helper to install/update the external `ttyimg` binary
+---
 local M = {}
 local config = require('neo-img.config')
 local autocmds = require("neo-img.autocommands")
 local utils = require("neo-img.utils")
 
 --- setups the plugin
+--- Setup plugin (idempotent)
+--- @param opts NeoImg.Config|nil
 function M.setup(opts)
   opts = opts or {}
   config.setup(opts)
@@ -12,6 +22,8 @@ function M.setup(opts)
 end
 
 --- installs ttyimg, which is a dependency for the plugin
+--- Download & place prebuilt ttyimg into the plugin bin dir.
+--- Falls back to user's globally installed ttyimg if preferred.
 function M.install()
   local target_dir = config.get_bin_dir()
 
