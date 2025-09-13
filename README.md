@@ -82,7 +82,8 @@ require('neo-img').setup({
   ----- Less Important -----
   auto_open = true,   -- Automatically open images when buffer is loaded
   oil_preview = true, -- changes oil preview of images too
-  backend = "auto",   -- auto / kitty / iterm / sixel
+  backend = "auto",   -- protocol hint (ttyimg only): auto / kitty / iterm / sixel
+  engine  = "ttyimg", -- implementation: ttyimg / dummy / wezterm
   resizeMode = "Fit", -- Fit / Stretch / Crop
   offset = "2x3",     -- that exmp is 2 cells offset x and 3 y.
   ttyimg = "local",   -- local / global
@@ -97,16 +98,20 @@ require('neo-img').setup({
 ```  
 
 ### Profiling Events
-When `debug = true`, the plugin logs a ring-buffer of events:
+When `debug = true`, the plugin logs a ring-buffer of events. (Recent additions unify inline/job paths.)
 
-| Event        | Meaning                                      |
-|--------------|----------------------------------------------|
-| `event_start`| BufWinEnter trigger received                 |
-| `timer_fire` | Debounce timer elapsed                       |
-| `job_start`  | External tool spawned                       |
-| `draw_ready` | Full output captured (ready to draw)         |
-| `cache_hit`  | Cache used, job skipped                      |
-| `cache_store`| Output stored in cache                       |
+| Event             | Meaning                                                   |
+|-------------------|-----------------------------------------------------------|
+| `event_start`     | BufWinEnter trigger received                              |
+| `timer_fire`      | Debounce timer elapsed                                    |
+| `render_start`    | Begin render attempt (identity key decided)               |
+| `cache_hit`       | Cache used, external work skipped                         |
+| `cache_miss`      | Not cached, need backend                                  |
+| `backend_resolved`| Backend module chosen (`engine` + backend name)           |
+| `job_start`       | External tool spawned (non-inline engines)                |
+| `render_ready`    | Output ready (mode = inline | job)                        |
+| `render_error`    | Backend produced an error output                          |
+| `cache_store`     | Output stored in cache                                    |
 
 Use `:NeoImg Debug` to print the recent timeline.
 
@@ -121,19 +126,41 @@ require('neo-img').setup({
 })
 ```
 
-### Backend Abstraction
-Backends live in `lua/neo-img/backends/`. Each exposes:
+### Backend / Engine Abstraction
+Backends (engines) live in `lua/neo-img/backends/`.
+
+Concept split:
+* `engine` => implementation module (e.g. `ttyimg`, `dummy`, `wezterm`)
+* `backend` => protocol hint passed to ttyimg (`auto|kitty|iterm|sixel`)
+
+Each engine currently implements either `build()` (oneshot) or returns inline output directly. (Planned: a unified `render()` and optional persistent process.)
+
+Example descriptor:
 ```lua
 return {
   name = 'example',
   persistent = false,
+  inline = false,           -- if true: build() returns escape output directly
   protocols = { sixel = true },
-  build = function(filepath, opts, config)
+  build = function(filepath, opts, config) -- oneshot form
     -- return {cmd_parts...}, protocol
-  end
+  end,
 }
 ```
-Current implementation: `ttyimg`. Future backends (e.g. `img2sixel`) can be added and selected via `backend`.
+Implemented engines:
+| Engine  | Type     | Notes                           |
+|---------|----------|---------------------------------|
+| ttyimg  | external | Default; supports protocols     |
+| dummy   | inline   | Dev/testing; colored placeholder|
+| wezterm | external | Uses `wezterm imgcat` (imgcat)  |
+
+Select with:
+```lua
+require('neo-img').setup({
+  engine = 'wezterm', -- or 'dummy', 'ttyimg'
+  backend = 'sixel',  -- still affects ttyimg protocol choice
+})
+```
 
 ### Performance Tuning Tips
 | Scenario                          | Tweak                                      |

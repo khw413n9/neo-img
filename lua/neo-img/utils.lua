@@ -260,7 +260,14 @@ function M.get_extension(filename) return filename:match("^.+%.(.+)$") end
 -- backend resolver (initial simple: only ttyimg)
 --- Resolve backend implementation module.
 local function resolve_backend(config)
-    -- future: inspect config.backend for selecting other modules
+    -- engine selects implementation module; backend still controls protocol for ttyimg
+    if config.engine == 'dummy' then
+        local ok, mod = pcall(require, 'neo-img.backends.dummy')
+        if ok then return mod end
+    elseif config.engine == 'wezterm' then
+        local ok, mod = pcall(require, 'neo-img.backends.wezterm')
+        if ok then return mod end
+    end
     return require('neo-img.backends.ttyimg')
 end
 
@@ -322,6 +329,7 @@ function M.display_image(filepath, win)
 
     -- Build identity key (filepath + size relevant params) to skip redundant redraws
     local identity_key = table.concat({filepath, opts.spx, opts.sc, opts.scale, opts.size, opts.offset.x, opts.offset.y}, '::')
+    profiler.record('render_start', {key = identity_key})
     -- cache lookup (fully drawn output cache)
     local cached = cache_get(identity_key, config)
     if cached then
@@ -329,6 +337,7 @@ function M.display_image(filepath, win)
         draw_image(win, opts.offset.y, opts.offset.x, cached, filepath)
         return
     end
+    profiler.record('cache_miss', {key = identity_key})
     if Image.last_key == identity_key and Image.inflight == false then
         -- already drawn with same parameters
         return
@@ -340,40 +349,59 @@ function M.display_image(filepath, win)
     -- postpone committing last_key until successful draw (avoid blocking when user switches early)
 
     local backend = resolve_backend(config)
-    local command, protocol = backend.build(filepath, {
-        spx = opts.spx,
-        sc = opts.sc,
-        scale = opts.scale,
-        width = opts.size,
-        height = opts.size
-    }, config)
+    profiler.record('backend_resolved', {engine = config.engine, backend = backend.name})
+    if backend.inline then
+        -- inline backend returns escape sequence directly
+        local esc = backend.build(filepath, {
+            spx = opts.spx,
+            sc = opts.sc,
+            scale = opts.scale,
+            width = opts.size,
+            height = opts.size
+        }, config)
+    profiler.record('render_ready', {mode = 'inline'})
+        cache_put(identity_key, esc, config)
+        draw_image(win, opts.offset.y, opts.offset.x, esc, filepath)
+        Image.last_key = identity_key
+        Image.inflight = false
+        return
+    end
 
-    Image.Delete() -- clears previous image (will also reset inflight)
-    Image.inflight = true
-    -- Safe concat (defensive) in case any element became nil unexpectedly
-    local ok_cmd, joined = pcall(function() return table.concat(command, ' ') end)
-    profiler.record('job_start', {cmd = ok_cmd and joined or 'N/A'})
-    Image.job = vim.fn.jobstart(command, {
-        on_stdout = function(_, data)
-            if data then
-                local output = table.concat(data, "\n")
-                -- error
-                if string.len(vim.inspect(data)) < 100 then
-                    -- if empty probbs just stopjob
-                    if output == "" then return end
-                    vim.notify("error: " .. output)
-                    return
+    local command, protocol = backend.build(filepath, {
+            spx = opts.spx,
+            sc = opts.sc,
+            scale = opts.scale,
+            width = opts.size,
+            height = opts.size
+        }, config)
+
+        Image.Delete() -- clears previous image (will also reset inflight)
+        Image.inflight = true
+        -- Safe concat (defensive) in case any element became nil unexpectedly
+        local ok_cmd, joined = pcall(function() return table.concat(command, ' ') end)
+        profiler.record('job_start', {cmd = ok_cmd and joined or 'N/A'})
+        Image.job = vim.fn.jobstart(command, {
+            on_stdout = function(_, data)
+                if data then
+                    local output = table.concat(data, "\n")
+                    -- error
+                    if string.len(vim.inspect(data)) < 100 then
+                        -- if empty probbs just stopjob
+                        if output == "" then return end
+                        profiler.record('render_error', {msg = output})
+                        vim.notify("error: " .. output)
+                        return
+                    end
+                    profiler.record('render_ready', {size = #output, mode = 'job'})
+                    cache_put(identity_key, output, config)
+                    draw_image(win, opts.offset.y, opts.offset.x, output, filepath)
+                    -- mark as last_key only after a successful full draw
+                    Image.last_key = identity_key
+                    Image.inflight = false
                 end
-                profiler.record('draw_ready', {size = #output})
-                cache_put(identity_key, output, config)
-                draw_image(win, opts.offset.y, opts.offset.x, output, filepath)
-                -- mark as last_key only after a successful full draw
-                Image.last_key = identity_key
-                Image.inflight = false
-            end
-        end,
-        stdout_buffered = true
-    })
+            end,
+            stdout_buffered = true
+        })
 end
 
 --- make a buf empty and unwritable

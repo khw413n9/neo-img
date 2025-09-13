@@ -7,6 +7,7 @@ local M = {}
 --- @field auto_open boolean Auto-open images on buffer load
 --- @field oil_preview boolean Enable oil.nvim preview for images
 --- @field backend "auto"|"kitty"|"iterm"|"sixel" Backend for rendering
+--- @field engine "ttyimg"|"dummy"|"wezterm" Backend implementation (external: ttyimg/wezterm or inline dummy)
 --- @field resizeMode "Fit"|"Stretch"|"Crop" Resize mode for images
 --- @field offset string Offset for positioning (e.g., "0x3")
 --- @field ttyimg "local"|"global" which ttyimg is preferred
@@ -50,6 +51,7 @@ M.defaults = {
   auto_open = true,   -- Automatically open images when buffer is loaded
   oil_preview = true, -- changes oil preview of images too
   backend = "auto",   -- auto / kitty / iterm / sixel
+  engine = "ttyimg",  -- ttyimg (external) / dummy (inline test) / wezterm (imgcat)
   resizeMode = "Fit", -- Fit / Stretch / Crop
   offset = "2x3",     -- that exmp is 2 cells offset x and 3 y.
   ttyimg = "local",   -- local / global
@@ -152,6 +154,10 @@ function M.validate_config(opts)
     return false
   end
 
+  local function is_valid_engine(value)
+    return value == "ttyimg" or value == "dummy" or value == "wezterm"
+  end
+
   local function is_valid_resize_mode(value)
     if type(value) == "string" then
       local value2 = string.lower(value)
@@ -177,6 +183,7 @@ function M.validate_config(opts)
     auto_open = is_valid_boolean(opts.auto_open) and opts.auto_open or defaults.auto_open,
     oil_preview = is_valid_boolean(opts.oil_preview) and opts.oil_preview or defaults.oil_preview,
     backend = is_valid_backend(opts.backend) and opts.backend or defaults.backend,
+  engine = is_valid_engine(opts.engine) and opts.engine or defaults.engine,
     resizeMode = is_valid_resize_mode(opts.resizeMode) and opts.resizeMode or defaults.resizeMode,
     offset = is_valid_offset(opts.offset) and opts.offset or defaults.offset,
     ttyimg = is_valid_ttyimg(opts.ttyimg) and opts.ttyimg or defaults.ttyimg,

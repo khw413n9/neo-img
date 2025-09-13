@@ -1,4 +1,8 @@
---- ttyimg backend descriptor (default backend)
+--- ttyimg backend descriptor (default external engine)
+-- engine vs backend fields:
+--  * config.engine selects implementation module (ttyimg external job vs dummy inline etc.)
+--  * config.backend selects protocol flavor for ttyimg (-p value: auto/kitty/iterm/sixel)
+-- For now only ttyimg supports multiple protocols; dummy ignores protocol.
 local M = {}
 
 -- backend descriptor for ttyimg
