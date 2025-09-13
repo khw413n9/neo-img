@@ -233,21 +233,10 @@ function M.get_extension(filename) return filename:match("^.+%.(.+)$") end
 --- @param filepath string the img to show
 --- @param opts {spx: string, sc: string, scale: string, width: string, height: string}
 --- @return table
-local function build_command(filepath, opts)
-    local config = main_config.get()
-
-    local protocol = "auto"
-    local valid_configs = {iterm = true, kitty = true, sixel = true}
-    if valid_configs[config.backend] then protocol = config.backend end
-
-    local command = {
-        config.bin_path, "-m", config.resizeMode, "-spx", opts.spx, "-sc",
-        opts.sc, "-center=" .. tostring(config.center), "-scale", opts.scale,
-        "-p", protocol, "-w", opts.width, "-h", opts.height, "-f", "sixel",
-        filepath
-    }
-
-    return command
+-- backend resolver (initial simple: only ttyimg)
+local function resolve_backend(config)
+    -- future: inspect config.backend for selecting other modules
+    return require('neo-img.backends.ttyimg')
 end
 
 --- @return integer? buf the main oil buf in the current tab
@@ -322,13 +311,14 @@ function M.display_image(filepath, win)
     end
     -- postpone committing last_key until successful draw (avoid blocking when user switches early)
 
-    local command = build_command(filepath, {
+    local backend = resolve_backend(config)
+    local command, protocol = backend.build(filepath, {
         spx = opts.spx,
         sc = opts.sc,
         scale = opts.scale,
         width = opts.size,
         height = opts.size
-    })
+    }, config)
 
     Image.Delete() -- clears previous image (will also reset inflight)
     Image.inflight = true
