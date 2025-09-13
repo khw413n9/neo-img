@@ -1,5 +1,6 @@
 <h1 align="center">Neo-Img</h1>  
 <p align="center">🖼️ A Neovim plugin for viewing images in the terminal. 🖼️</p> 
+<p align="center"><em>This repository is a fork with caching, and backend abstraction enhancements.</em></p>
 <div align="center">
     
 [![Static Badge](https://img.shields.io/badge/neovim-1e2029?logo=neovim&logoColor=3CA628&label=built%20for&labelColor=15161b)](https://neovim.io)  
@@ -12,6 +13,9 @@ https://github.com/user-attachments/assets/f7c76789-d57f-437c-b4da-444eebb7eb20
 - Automatically preview supported image files
 - Oil.nvim preview support
 - Caching
+ - In-flight job suppression & configurable debounce
+ - Backend abstraction (currently ttyimg, easily extensible)
+ - Lightweight profiling timeline
 
 ## Installation 🚀  
 
@@ -35,6 +39,7 @@ return {
 - Images will automatically preview when opening supported files  
 - Use `:NeoImg DisplayImage` to manually display the current file  
 - you can also call `require("neo-img.utils").display_image(filepath, win)` to display the image in the given window  
+- `:NeoImg Debug` prints recent profiling timeline when `debug = true`  
 
 ## Configuration ⚙️  
 > document files require 
@@ -80,7 +85,62 @@ require('neo-img').setup({
   backend = "auto",   -- auto / kitty / iterm / sixel
   resizeMode = "Fit", -- Fit / Stretch / Crop
   offset = "2x3",     -- that exmp is 2 cells offset x and 3 y.
-  ttyimg = "local"    -- local / global
+  ttyimg = "local",   -- local / global
+  debug = false,       -- enable profiling events (:NeoImg Debug)
+  debounce_ms = 60,    -- delay before launching render (0 = immediate)
+  cache = {
+    enabled = true,
+    max_bytes = 4 * 1024 * 1024, -- output cache upper bound
+  },
   ----- Less Important -----
 })
 ```  
+
+### Profiling Events
+When `debug = true`, the plugin logs a ring-buffer of events:
+
+| Event        | Meaning                                      |
+|--------------|----------------------------------------------|
+| `event_start`| BufWinEnter trigger received                 |
+| `timer_fire` | Debounce timer elapsed                       |
+| `job_start`  | External tool spawned                       |
+| `draw_ready` | Full output captured (ready to draw)         |
+| `cache_hit`  | Cache used, job skipped                      |
+| `cache_store`| Output stored in cache                       |
+
+Use `:NeoImg Debug` to print the recent timeline.
+
+### Cache
+The cache stores the raw terminal (sixel/kitty) output string keyed by image + geometry. 
+Eviction is size-based (oldest first) when `total_bytes > max_bytes`.
+
+Disable or tune:
+```lua
+require('neo-img').setup({
+  cache = { enabled = false, max_bytes = 8 * 1024 * 1024 }
+})
+```
+
+### Backend Abstraction
+Backends live in `lua/neo-img/backends/`. Each exposes:
+```lua
+return {
+  name = 'example',
+  persistent = false,
+  protocols = { sixel = true },
+  build = function(filepath, opts, config)
+    -- return {cmd_parts...}, protocol
+  end
+}
+```
+Current implementation: `ttyimg`. Future backends (e.g. `img2sixel`) can be added and selected via `backend`.
+
+### Performance Tuning Tips
+| Scenario                          | Tweak                                      |
+|----------------------------------|--------------------------------------------|
+| Faster first paint               | Reduce `debounce_ms` (e.g. 30 or 0)        |
+| Prevent CPU spikes on fast nav   | Keep small `debounce_ms` (10–30)           |
+| Many revisits to same images     | Increase `cache.max_bytes`                 |
+| Memory pressure                  | Lower `cache.max_bytes` or disable cache   |
+| Investigate slowness             | Set `debug = true` and inspect timeline    |
+
