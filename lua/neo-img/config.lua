@@ -12,6 +12,7 @@ local M = {}
 --- @field ttyimg "local"|"global" which ttyimg is preferred
 --- @field debug boolean enable debug instrumentation
 --- @field debounce_ms integer debounce (ms) before drawing after events
+--- @field cache {enabled:boolean, max_bytes:integer}? cache settings
 --- @field bin_path? string Path to the ttyimg binary (populated at runtime)
 --- @field os? string the OS of the machine (populated at runtime)
 --- @field window_size? {spx: NeoImg.Size, sc: NeoImg.Size} window size fallbacks in px and cells (populated at runtime)
@@ -54,6 +55,10 @@ M.defaults = {
   ttyimg = "local",   -- local / global
   debug = false,       -- instrumentation disabled by default
   debounce_ms = 60,    -- initial debounce (ms)
+  cache = {            -- simple in-memory output cache
+    enabled = true,
+    max_bytes = 4 * 1024 * 1024, -- 4MB default
+  },
   ----- Less Important -----
 }
 
@@ -177,6 +182,10 @@ function M.validate_config(opts)
     ttyimg = is_valid_ttyimg(opts.ttyimg) and opts.ttyimg or defaults.ttyimg,
   debug = is_valid_boolean(opts.debug) and opts.debug or defaults.debug,
   debounce_ms = type(opts.debounce_ms) == "number" and opts.debounce_ms or defaults.debounce_ms,
+    cache = (type(opts.cache) == 'table' and {
+      enabled = type(opts.cache.enabled) == 'boolean' and opts.cache.enabled or defaults.cache.enabled,
+      max_bytes = type(opts.cache.max_bytes) == 'number' and opts.cache.max_bytes or defaults.cache.max_bytes,
+    }) or defaults.cache,
 
     bin_path = type(opts.bin_path) == "string" and opts.bin_path or nil,
     os = type(opts.os) == "string" and opts.os or nil,

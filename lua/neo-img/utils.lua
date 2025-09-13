@@ -3,6 +3,58 @@ local M = {}
 local Image = require("neo-img.image")
 local main_config = require("neo-img.config")
 local profiler = require("neo-img.profiler")
+local cache_store = {total_bytes = 0, items = {}, order = {}, counter = 0}
+
+-- internal helper to enforce cache size
+local function cache_evict(max_bytes)
+    if cache_store.total_bytes <= max_bytes then return end
+    -- simple oldest-first eviction by ts (order array keeps {key, ts})
+    table.sort(cache_store.order, function(a,b) return a[2] < b[2] end)
+    for _, pair in ipairs(cache_store.order) do
+        if cache_store.total_bytes <= max_bytes then break end
+        local k = pair[1]
+        local it = cache_store.items[k]
+        if it then
+            cache_store.total_bytes = cache_store.total_bytes - it.bytes
+            cache_store.items[k] = nil
+        end
+    end
+    -- rebuild order without removed keys
+    local new_order = {}
+    for _, pair in ipairs(cache_store.order) do
+        if cache_store.items[pair[1]] then table.insert(new_order, pair) end
+    end
+    cache_store.order = new_order
+end
+
+local function cache_get(key, cfg)
+    if not cfg.cache or not cfg.cache.enabled then return nil end
+    local it = cache_store.items[key]
+    if it then
+        profiler.record('cache_hit', {bytes = it.bytes})
+        it.ts = cache_store.counter + 1
+        cache_store.counter = it.ts
+        return it.data
+    end
+    return nil
+end
+
+local function cache_put(key, data, cfg)
+    if not cfg.cache or not cfg.cache.enabled then return end
+    local bytes = #data
+    if bytes > cfg.cache.max_bytes then return end -- single item too large
+    -- store / update
+    local existing = cache_store.items[key]
+    if existing then
+        cache_store.total_bytes = cache_store.total_bytes - existing.bytes
+    end
+    cache_store.counter = cache_store.counter + 1
+    cache_store.items[key] = {data = data, bytes = bytes, ts = cache_store.counter}
+    table.insert(cache_store.order, {key, cache_store.counter})
+    cache_store.total_bytes = cache_store.total_bytes + bytes
+    profiler.record('cache_store', {bytes = bytes, total = cache_store.total_bytes})
+    cache_evict(cfg.cache.max_bytes)
+end
 
 --- returns the os and arch
 --- @return "windows"|"linux"|"darwin" os the OS of the machine
@@ -253,6 +305,13 @@ function M.display_image(filepath, win)
 
     -- Build identity key (filepath + size relevant params) to skip redundant redraws
     local identity_key = table.concat({filepath, opts.spx, opts.sc, opts.scale, opts.size, opts.offset.x, opts.offset.y}, '::')
+    -- cache lookup (fully drawn output cache)
+    local cached = cache_get(identity_key, config)
+    if cached then
+        -- Direct draw without spawning job (skip inflight handling)
+        draw_image(win, opts.offset.y, opts.offset.x, cached, filepath)
+        return
+    end
     if Image.last_key == identity_key and Image.inflight == false then
         -- already drawn with same parameters
         return
@@ -261,7 +320,7 @@ function M.display_image(filepath, win)
     if Image.inflight and Image.last_key == identity_key then
         return
     end
-    Image.last_key = identity_key
+    -- postpone committing last_key until successful draw (avoid blocking when user switches early)
 
     local command = build_command(filepath, {
         spx = opts.spx,
@@ -288,7 +347,10 @@ function M.display_image(filepath, win)
                     return
                 end
                 profiler.record('draw_ready', {size = #output})
+                cache_put(identity_key, output, config)
                 draw_image(win, opts.offset.y, opts.offset.x, output, filepath)
+                -- mark as last_key only after a successful full draw
+                Image.last_key = identity_key
                 Image.inflight = false
             end
         end,

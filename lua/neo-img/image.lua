@@ -94,6 +94,8 @@ function Image.StopJob()
     Image.job = nil
   end
   Image.inflight = false
+  -- Do not keep last_key if we aborted mid-job; allow re-render later
+  -- (utils will set a new last_key upon successful completion only now)
 end
 
 --- cleans the screen if needed
