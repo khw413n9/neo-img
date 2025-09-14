@@ -115,10 +115,17 @@ local function setup_api()
             local cache = require('neo-img.cache')
             cache.reset()
             print('NeoImg cache cleared.')
+        elseif command_name == 'Health' then
+            local ok, h = pcall(require, 'neo-img.health')
+            if ok and h.check then
+                h.check()
+            else
+                vim.notify('neo-img health module not available', vim.log.levels.ERROR)
+            end
         end
     end, {
         nargs = 1,
-        complete = function() return {'Install', 'DisplayImage', 'Debug', 'CacheReset'} end
+        complete = function() return {'Install', 'DisplayImage', 'Debug', 'CacheReset', 'Health'} end
     })
 end
 

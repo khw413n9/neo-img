@@ -178,6 +178,25 @@ Recent refactors separated concerns:
   * Repositioning the same image now reuses cached output (no re-render) unless geometry changes.
 * `Image` state now tracks `geometry_key` and `last_placement_key` (legacy `last_key` kept temporarily).
 
+### Health / Troubleshooting
+Integration with `:checkhealth neo-img` provides environment diagnostics:
+* Engine & binary presence / validation
+* Cache enabled & size
+* Terminal environment (TERM / TERM_PROGRAM detection)
+* Window sizing fallback status
+* Supported extensions count
+
+User commands aiding troubleshooting:
+* `:NeoImg Debug` – profiling timeline + cache stats
+* `:NeoImg CacheReset` – clear in-memory cache
+* `:checkhealth neo-img` – summarized diagnostics
+
+If images do not render:
+1. Run `:checkhealth neo-img` and verify engine / binary lines
+2. Ensure file extension is listed in `supported_extensions`
+3. Temporarily disable cache (`cache.enabled=false`) to rule out stale state
+4. Run with `debug=true` and inspect `render_start` -> `render_ready` chain
+
 Planned next steps include a unified `render()` API for persistent engines and progressive streaming.
 
 Cache maintenance:
