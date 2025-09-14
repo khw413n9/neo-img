@@ -18,6 +18,8 @@ local Image = {
   inflight = false,
   --- last drawn identity key
   last_key = nil,
+  --- last placement key (identity + offset) for duplicate suppression
+  placement_key = nil,
 }
 local tty = require("neo-img.tty")
 

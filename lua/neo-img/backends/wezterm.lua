@@ -16,10 +16,11 @@ M.protocols = { imgcat = true }
 -- @return table cmd, string protocol
 function M.build(filepath, opts, config)
   -- opts.sc: "<cols>x<rows>xforce" 形式
-  local cols = nil
+  local cols, rows = nil, nil
   if opts and opts.sc then
-    local c = opts.sc:match("^(%d+)x")
+    local c, r = opts.sc:match("^(%d+)x(%d+)")
     cols = tonumber(c)
+    rows = tonumber(r)
   end
   local pct = 80 --[[@as integer]]
   if config and type(config.size) == 'string' then
@@ -30,11 +31,10 @@ function M.build(filepath, opts, config)
     end
   end
   local width_cells = cols and math.max(1, math.floor(cols * (pct / 100))) or nil
+  local height_cells = rows and math.max(1, math.floor(rows * (pct / 100))) or nil
   local cmd = { 'wezterm', 'imgcat' }
-  if width_cells then
-    table.insert(cmd, '--width')
-    table.insert(cmd, tostring(width_cells))
-  end
+  if width_cells then table.insert(cmd, '--width'); table.insert(cmd, tostring(width_cells)) end
+  if height_cells then table.insert(cmd, '--height'); table.insert(cmd, tostring(height_cells)) end
   table.insert(cmd, filepath)
   return cmd, 'imgcat'
 end

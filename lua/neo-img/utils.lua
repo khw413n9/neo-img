@@ -327,9 +327,10 @@ function M.display_image(filepath, win)
         return -- window/layout not ready yet
     end
 
-    -- Build identity key (filepath + size relevant params) to skip redundant redraws
-    local identity_key = table.concat({filepath, opts.spx, opts.sc, opts.scale, opts.size, opts.offset.x, opts.offset.y}, '::')
-    profiler.record('render_start', {key = identity_key})
+    -- Build identity key (geometry + file) excluding placement offset (so repositioning can reuse cache)
+    local identity_key = table.concat({filepath, opts.spx, opts.sc, opts.scale, opts.size}, '::')
+    local placement_key = identity_key .. '::' .. opts.offset.x .. '::' .. opts.offset.y
+    profiler.record('render_start', {key = identity_key, placement = placement_key})
     -- cache lookup (fully drawn output cache)
     local cached = cache_get(identity_key, config)
     if cached then
@@ -338,12 +339,12 @@ function M.display_image(filepath, win)
         return
     end
     profiler.record('cache_miss', {key = identity_key})
-    if Image.last_key == identity_key and Image.inflight == false then
+    if Image.last_key == placement_key and Image.inflight == false then
         -- already drawn with same parameters
         return
     end
     -- If a job is currently running for the exact same identity, skip starting another
-    if Image.inflight and Image.last_key == identity_key then
+    if Image.inflight and Image.last_key == placement_key then
         return
     end
     -- postpone committing last_key until successful draw (avoid blocking when user switches early)
@@ -362,7 +363,7 @@ function M.display_image(filepath, win)
     profiler.record('render_ready', {mode = 'inline'})
         cache_put(identity_key, esc, config)
         draw_image(win, opts.offset.y, opts.offset.x, esc, filepath)
-        Image.last_key = identity_key
+        Image.last_key = placement_key
         Image.inflight = false
         return
     end
@@ -396,7 +397,7 @@ function M.display_image(filepath, win)
                     cache_put(identity_key, output, config)
                     draw_image(win, opts.offset.y, opts.offset.x, output, filepath)
                     -- mark as last_key only after a successful full draw
-                    Image.last_key = identity_key
+                    Image.last_key = placement_key
                     Image.inflight = false
                 end
             end,
