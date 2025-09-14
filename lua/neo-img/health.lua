@@ -17,14 +17,37 @@ local function check_engine(cfg)
       warn('ttyimg selected but bin_path empty (run :NeoImg Install)')
     else
       ok('ttyimg binary: ' .. cfg.bin_path)
-      -- try lightweight validate (ignore errors if missing)
+      -- try lightweight validate. Accept both 'vX.Y.Z' and 'X.Y.Z'.
       local res = ''
       if vim.fn.filereadable(cfg.bin_path) == 1 then
-        res = vim.fn.system({ cfg.bin_path, '--validate', 'v' .. cfg.ttyimg_version })
-        if vim.v.shell_error == 0 then
-          ok('ttyimg validate ok')
+        -- first attempt: without forced v prefix so we accept tool's native format
+        res = vim.fn.system({ cfg.bin_path, '--validate', cfg.ttyimg_version })
+        local exit = vim.v.shell_error
+        if exit ~= 0 then
+          -- fallback attempt with v prefix just in case
+            res = vim.fn.system({ cfg.bin_path, '--validate', 'v' .. cfg.ttyimg_version })
+            exit = vim.v.shell_error
+        end
+        local flat = res:gsub('\n',' ')
+        -- Extract version substring heuristically
+        local reported = flat:match("got:%s*'([^']+)'") or flat:match('got:?%s*([%w%._%-]+)') or ''
+        local want = cfg.ttyimg_version
+        local function norm(v) return (v or ''):gsub('^v','') end
+        if exit == 0 then
+          ok('ttyimg validate ok (version ' .. (reported ~= '' and reported or 'unknown') .. ')')
         else
-          warn('ttyimg validate failed (maybe different version) output=' .. res:gsub('\n',' '))
+          if norm(reported) == norm(want) and reported ~= '' then
+            warn('ttyimg validate non-zero but version matches ('..reported..')')
+          else
+            warn('ttyimg validate failed output=' .. flat)
+          end
+        end
+        -- Capability flags parsing (example: "Iterm: true, Kitty: true, Sixel: false")
+        local iterm = flat:match('Iterm:%s*(%a+)')
+        local kitty = flat:match('Kitty:%s*(%a+)')
+        local sixel = flat:match('Sixel:%s*(%a+)')
+        if iterm or kitty or sixel then
+          ok(string.format('ttyimg capabilities iterm=%s kitty=%s sixel=%s', tostring(iterm), tostring(kitty), tostring(sixel)))
         end
       end
     end
