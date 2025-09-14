@@ -15,9 +15,27 @@ M.protocols = { imgcat = true }
 -- @param config NeoImg.Config
 -- @return table cmd, string protocol
 function M.build(filepath, opts, config)
-  -- width/height は cells (%サイズを cells 換算せずそのまま渡すのは暫定)
-  -- WezTerm の `--width` `--height` はセル単位指定。ここでは % 指定を無視し "auto" に任せる簡易版。
-  local cmd = { 'wezterm', 'imgcat', filepath }
+  -- opts.sc: "<cols>x<rows>xforce" 形式
+  local cols = nil
+  if opts and opts.sc then
+    local c = opts.sc:match("^(%d+)x")
+    cols = tonumber(c)
+  end
+  local pct = 80 --[[@as integer]]
+  if config and type(config.size) == 'string' then
+    local n = config.size:match("^(%d+)%%$")
+    if n then
+      local nn = tonumber(n)
+      if nn then pct = math.floor(nn) end
+    end
+  end
+  local width_cells = cols and math.max(1, math.floor(cols * (pct / 100))) or nil
+  local cmd = { 'wezterm', 'imgcat' }
+  if width_cells then
+    table.insert(cmd, '--width')
+    table.insert(cmd, tostring(width_cells))
+  end
+  table.insert(cmd, filepath)
   return cmd, 'imgcat'
 end
 

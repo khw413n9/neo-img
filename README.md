@@ -83,7 +83,7 @@ require('neo-img').setup({
   auto_open = true,   -- Automatically open images when buffer is loaded
   oil_preview = true, -- changes oil preview of images too
   backend = "auto",   -- protocol hint (ttyimg only): auto / kitty / iterm / sixel
-  engine  = "ttyimg", -- implementation: ttyimg / dummy / wezterm
+  engine  = "ttyimg", -- implementation: ttyimg / dummy / wezterm / auto (env detect)
   resizeMode = "Fit", -- Fit / Stretch / Crop
   offset = "2x3",     -- that exmp is 2 cells offset x and 3 y.
   ttyimg = "local",   -- local / global
@@ -153,6 +153,7 @@ Implemented engines:
 | ttyimg  | external | Default; supports protocols     |
 | dummy   | inline   | Dev/testing; colored placeholder|
 | wezterm | external | Uses `wezterm imgcat` (imgcat)  |
+| auto    | meta     | Detects WezTerm -> wezterm, kitty TERM -> ttyimg(kitty), else ttyimg |
 
 Select with:
 ```lua
@@ -161,6 +162,14 @@ require('neo-img').setup({
   backend = 'sixel',  -- still affects ttyimg protocol choice
 })
 ```
+
+Autodetect (set `engine = 'auto'`):
+Priority order:
+1. TERM_PROGRAM contains 'WezTerm' and wezterm binary exists -> wezterm engine
+2. TERM contains 'kitty' -> ttyimg (protocol forced to kitty if backend = 'auto')
+3. fallback -> ttyimg
+
+WezTerm sizing: width is derived from `%` size * current total columns, passed via `--width <cells>`; height left auto for aspect.
 
 ### Performance Tuning Tips
 | Scenario                          | Tweak                                      |

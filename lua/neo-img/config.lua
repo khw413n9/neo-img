@@ -7,7 +7,7 @@ local M = {}
 --- @field auto_open boolean Auto-open images on buffer load
 --- @field oil_preview boolean Enable oil.nvim preview for images
 --- @field backend "auto"|"kitty"|"iterm"|"sixel" Backend for rendering
---- @field engine "ttyimg"|"dummy"|"wezterm" Backend implementation (external: ttyimg/wezterm or inline dummy)
+--- @field engine "auto"|"ttyimg"|"dummy"|"wezterm" Backend implementation (external: ttyimg/wezterm, inline dummy, auto detect)
 --- @field resizeMode "Fit"|"Stretch"|"Crop" Resize mode for images
 --- @field offset string Offset for positioning (e.g., "0x3")
 --- @field ttyimg "local"|"global" which ttyimg is preferred
@@ -51,7 +51,7 @@ M.defaults = {
   auto_open = true,   -- Automatically open images when buffer is loaded
   oil_preview = true, -- changes oil preview of images too
   backend = "auto",   -- auto / kitty / iterm / sixel
-  engine = "ttyimg",  -- ttyimg (external) / dummy (inline test) / wezterm (imgcat)
+  engine = "ttyimg",  -- ttyimg / dummy / wezterm / auto
   resizeMode = "Fit", -- Fit / Stretch / Crop
   offset = "2x3",     -- that exmp is 2 cells offset x and 3 y.
   ttyimg = "local",   -- local / global
@@ -120,6 +120,18 @@ function M.setup(opts)
   config.bin_path = M.get_bin_path()
   local new_opts = opts and M.validate_config(opts) or {}
   config = vim.tbl_deep_extend('force', M.defaults, new_opts)
+  if config.engine == 'auto' then
+    local tp = (os.getenv('TERM_PROGRAM') or ''):lower()
+    local term = (os.getenv('TERM') or ''):lower()
+    if tp:find('wezterm') and vim.fn.exepath('wezterm') ~= '' then
+      config.engine = 'wezterm'
+    elseif term:find('kitty') then
+      config.engine = 'ttyimg'
+      if config.backend == 'auto' then config.backend = 'kitty' end
+    else
+      config.engine = 'ttyimg'
+    end
+  end
 end
 
 --- Get the current configuration
@@ -155,7 +167,7 @@ function M.validate_config(opts)
   end
 
   local function is_valid_engine(value)
-    return value == "ttyimg" or value == "dummy" or value == "wezterm"
+    return value == "ttyimg" or value == "dummy" or value == "wezterm" or value == "auto"
   end
 
   local function is_valid_resize_mode(value)

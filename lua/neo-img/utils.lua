@@ -307,8 +307,8 @@ end
 function M.display_image(filepath, win)
     local config = main_config.get()
 
-    -- checks before draw
-    if config.bin_path == "" then
+    -- checks before draw (only enforce ttyimg binary when ttyimg engine)
+    if config.engine == 'ttyimg' and config.bin_path == "" then
         vim.notify("ttyimg isn't installed, call :NeoImg Install",
                    vim.log.levels.ERROR)
         return
