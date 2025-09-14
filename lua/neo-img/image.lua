@@ -16,10 +16,12 @@ local Image = {
   draw = {},
   --- in-flight job marker
   inflight = false,
-  --- last drawn identity key
+  --- geometry key (file + spx + sc + scale + size) used for cache identity
+  geometry_key = nil,
+  --- placement key (geometry + offset) for duplicate suppression
+  last_placement_key = nil,
+  --- @deprecated kept for backward compatibility during refactor
   last_key = nil,
-  --- last placement key (identity + offset) for duplicate suppression
-  placement_key = nil,
 }
 local tty = require("neo-img.tty")
 

@@ -11,10 +11,11 @@ M.persistent = false
 M.protocols = { auto = true, kitty = true, iterm = true, sixel = true }
 
 --- Build the command line for ttyimg
--- @param filepath string
--- @param opts {spx:string, sc:string, scale:string, width:string, height:string}
--- @param config NeoImg.Config
--- @return table cmd, string protocol
+--- @param filepath string absolute path of image file
+--- @param opts {spx:string, sc:string, scale:string, width:string, height:string}
+--- @param config NeoImg.Config
+--- @return table cmd array suitable for jobstart
+--- @return string protocol resolved protocol name
 --- Build ttyimg command arguments & chosen protocol
 function M.build(filepath, opts, config)
   local protocol = 'auto'

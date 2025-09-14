@@ -102,16 +102,23 @@ local function setup_api()
         elseif command_name == 'Debug' then
             local profiler = require('neo-img.profiler')
             local lines = profiler.format()
+            local cache = require('neo-img.cache')
+            local stats = cache.stats()
+            print(string.format('NeoImg cache: %d items, %.1f KB', stats.count, stats.total_bytes / 1024))
             if #lines == 0 then
                 print('NeoImg: no debug entries (enable config.debug)')
-                return
+            else
+                print('NeoImg timeline:')
+                for _, l in ipairs(lines) do print(l) end
             end
-            print('NeoImg timeline:')
-            for _, l in ipairs(lines) do print(l) end
+        elseif command_name == 'CacheReset' then
+            local cache = require('neo-img.cache')
+            cache.reset()
+            print('NeoImg cache cleared.')
         end
     end, {
         nargs = 1,
-        complete = function() return {'Install', 'DisplayImage', 'Debug'} end
+        complete = function() return {'Install', 'DisplayImage', 'Debug', 'CacheReset'} end
     })
 end
 

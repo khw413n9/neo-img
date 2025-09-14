@@ -3,9 +3,9 @@
 --- Responsibilities:
 ---  * window detection & validation (fast-event safe)
 ---  * dimension calculation & fallback size probing
----  * output cache (memory, LRU-like by timestamp)
 ---  * backend resolution
 ---  * drawing orchestration + job lifecycle guards
+---  * (cache lives in separate module neo-img.cache)
 ---
 --- Cache strategy:
 ---  key = filepath + geometry (spx/sc/scale/size/offset)
@@ -17,65 +17,7 @@ local M = {}
 local Image = require("neo-img.image")
 local main_config = require("neo-img.config")
 local profiler = require("neo-img.profiler")
-local cache_store = {total_bytes = 0, items = {}, order = {}, counter = 0}
-
--- internal helper to enforce cache size
-local function cache_evict(max_bytes)
-    if cache_store.total_bytes <= max_bytes then return end
-    -- simple oldest-first eviction by ts (order array keeps {key, ts})
-    table.sort(cache_store.order, function(a,b) return a[2] < b[2] end)
-    for _, pair in ipairs(cache_store.order) do
-        if cache_store.total_bytes <= max_bytes then break end
-        local k = pair[1]
-        local it = cache_store.items[k]
-        if it then
-            cache_store.total_bytes = cache_store.total_bytes - it.bytes
-            cache_store.items[k] = nil
-        end
-    end
-    -- rebuild order without removed keys
-    local new_order = {}
-    for _, pair in ipairs(cache_store.order) do
-        if cache_store.items[pair[1]] then table.insert(new_order, pair) end
-    end
-    cache_store.order = new_order
-end
-
---- Attempt to fetch cached output
---- @param key string
---- @param cfg NeoImg.Config
-local function cache_get(key, cfg)
-    if not cfg.cache or not cfg.cache.enabled then return nil end
-    local it = cache_store.items[key]
-    if it then
-        profiler.record('cache_hit', {bytes = it.bytes})
-        it.ts = cache_store.counter + 1
-        cache_store.counter = it.ts
-        return it.data
-    end
-    return nil
-end
-
---- Store output in cache (guarding size & eviction)
---- @param key string
---- @param data string
---- @param cfg NeoImg.Config
-local function cache_put(key, data, cfg)
-    if not cfg.cache or not cfg.cache.enabled then return end
-    local bytes = #data
-    if bytes > cfg.cache.max_bytes then return end -- single item too large
-    -- store / update
-    local existing = cache_store.items[key]
-    if existing then
-        cache_store.total_bytes = cache_store.total_bytes - existing.bytes
-    end
-    cache_store.counter = cache_store.counter + 1
-    cache_store.items[key] = {data = data, bytes = bytes, ts = cache_store.counter}
-    table.insert(cache_store.order, {key, cache_store.counter})
-    cache_store.total_bytes = cache_store.total_bytes + bytes
-    profiler.record('cache_store', {bytes = bytes, total = cache_store.total_bytes})
-    cache_evict(cfg.cache.max_bytes)
-end
+local cache = require('neo-img.cache')
 
 --- returns the os and arch
 --- @return "windows"|"linux"|"darwin" os the OS of the machine
@@ -137,7 +79,9 @@ function M.get_window_size_fallback()
         local winsize = ffi.new("struct winsize")
         local success = ffi.C.ioctl(0, TIOCGWINSZ, winsize)
         if success == 0 then
+            ---@diagnostic disable-next-line: undefined-field
             spx.x = winsize.ws_xpixel
+            ---@diagnostic disable-next-line: undefined-field
             spx.y = winsize.ws_ypixel
         end
     end
@@ -253,10 +197,8 @@ end
 --- @return string the ext
 function M.get_extension(filename) return filename:match("^.+%.(.+)$") end
 
---- builds the command to run in order to get the img
---- @param filepath string the img to show
---- @param opts {spx: string, sc: string, scale: string, width: string, height: string}
---- @return table
+-- builds the command to run in order to get the img (handled by backend modules)
+-- (LuaDoc removed here to avoid mis-association with following function)
 -- backend resolver (initial simple: only ttyimg)
 --- Resolve backend implementation module.
 local function resolve_backend(config)
@@ -330,21 +272,22 @@ function M.display_image(filepath, win)
     -- Build identity key (geometry + file) excluding placement offset (so repositioning can reuse cache)
     local identity_key = table.concat({filepath, opts.spx, opts.sc, opts.scale, opts.size}, '::')
     local placement_key = identity_key .. '::' .. opts.offset.x .. '::' .. opts.offset.y
+    Image.geometry_key = identity_key
     profiler.record('render_start', {key = identity_key, placement = placement_key})
     -- cache lookup (fully drawn output cache)
-    local cached = cache_get(identity_key, config)
+    local cached = cache.get(identity_key, config)
     if cached then
         -- Direct draw without spawning job (skip inflight handling)
         draw_image(win, opts.offset.y, opts.offset.x, cached, filepath)
         return
     end
     profiler.record('cache_miss', {key = identity_key})
-    if Image.last_key == placement_key and Image.inflight == false then
+    if Image.last_placement_key == placement_key and Image.inflight == false then
         -- already drawn with same parameters
         return
     end
     -- If a job is currently running for the exact same identity, skip starting another
-    if Image.inflight and Image.last_key == placement_key then
+    if Image.inflight and Image.last_placement_key == placement_key then
         return
     end
     -- postpone committing last_key until successful draw (avoid blocking when user switches early)
@@ -361,9 +304,10 @@ function M.display_image(filepath, win)
             height = opts.size
         }, config)
     profiler.record('render_ready', {mode = 'inline'})
-        cache_put(identity_key, esc, config)
+    cache.put(identity_key, esc, config)
         draw_image(win, opts.offset.y, opts.offset.x, esc, filepath)
-        Image.last_key = placement_key
+    Image.last_placement_key = placement_key
+    Image.last_key = placement_key -- backward compatibility during refactor
         Image.inflight = false
         return
     end
@@ -379,7 +323,13 @@ function M.display_image(filepath, win)
         Image.Delete() -- clears previous image (will also reset inflight)
         Image.inflight = true
         -- Safe concat (defensive) in case any element became nil unexpectedly
-        local ok_cmd, joined = pcall(function() return table.concat(command, ' ') end)
+        local ok_cmd, joined = pcall(function()
+            if type(command) == 'table' then
+                return table.concat(command, ' ')
+            else
+                return tostring(command)
+            end
+        end)
         profiler.record('job_start', {cmd = ok_cmd and joined or 'N/A'})
         Image.job = vim.fn.jobstart(command, {
             on_stdout = function(_, data)
@@ -394,10 +344,11 @@ function M.display_image(filepath, win)
                         return
                     end
                     profiler.record('render_ready', {size = #output, mode = 'job'})
-                    cache_put(identity_key, output, config)
+                    cache.put(identity_key, output, config)
                     draw_image(win, opts.offset.y, opts.offset.x, output, filepath)
-                    -- mark as last_key only after a successful full draw
-                    Image.last_key = placement_key
+                    -- mark placement only after a successful full draw
+                    Image.last_placement_key = placement_key
+                    Image.last_key = placement_key -- backward compatibility
                     Image.inflight = false
                 end
             end,

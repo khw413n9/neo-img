@@ -171,6 +171,19 @@ Priority order:
 
 WezTerm sizing: width is derived from `%` size * current total columns, passed via `--width <cells>`; height left auto for aspect.
 
+### Internal Architecture (Refactor Notes)
+Recent refactors separated concerns:
+* Cache logic extracted into `lua/neo-img/cache.lua` (API: `get/put/stats/reset`).
+* Geometry identity key (file + spx + sc + scale + size) decoupled from placement (offset).
+  * Repositioning the same image now reuses cached output (no re-render) unless geometry changes.
+* `Image` state now tracks `geometry_key` and `last_placement_key` (legacy `last_key` kept temporarily).
+
+Planned next steps include a unified `render()` API for persistent engines and progressive streaming.
+
+Cache maintenance:
+* `:NeoImg Debug` (when `debug=true`) prints profiling timeline and could include cache stats in future.
+* (Upcoming) `:NeoImg CacheReset` will clear in-memory cache via `cache.reset()`.
+
 ### Performance Tuning Tips
 | Scenario                          | Tweak                                      |
 |----------------------------------|--------------------------------------------|

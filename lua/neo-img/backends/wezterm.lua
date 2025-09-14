@@ -10,10 +10,11 @@ M.inline = false
 M.protocols = { imgcat = true }
 
 --- Build command for wezterm imgcat.
--- @param filepath string
--- @param opts table {spx, sc, scale, width, height}
--- @param config NeoImg.Config
--- @return table cmd, string protocol
+--- @param filepath string absolute path of image file
+--- @param opts {spx:string, sc:string, scale:string, width:string, height:string}|table
+--- @param config NeoImg.Config
+--- @return table cmd array for jobstart
+--- @return string protocol always 'imgcat'
 function M.build(filepath, opts, config)
   -- opts.sc: "<cols>x<rows>xforce" 形式
   local cols, rows = nil, nil

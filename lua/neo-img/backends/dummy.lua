@@ -6,6 +6,11 @@ M.persistent = false
 M.inline = true   -- signals utils.display_image to bypass jobstart
 
 --- Build method kept for interface parity (ignored arguments)
+--- @param filepath string
+--- @param opts table
+--- @param config NeoImg.Config
+--- @return string esc inline escape sequence
+--- @return string mode always 'inline'
 function M.build(filepath, opts, config)
   -- simulate a small escape sequence representing an "image"
   local txt = string.format("Dummy Image\nfile: %s\nspx=%s sc=%s scale=%s size=%s\n",
