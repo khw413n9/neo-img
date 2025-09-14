@@ -153,7 +153,7 @@ Implemented engines:
 | ttyimg  | external | Default; supports protocols     |
 | dummy   | inline   | Dev/testing; colored placeholder|
 | wezterm | external | Uses `wezterm imgcat` (imgcat)  |
-| auto    | meta     | Detects WezTerm -> wezterm, kitty TERM -> ttyimg(kitty), else ttyimg |
+| auto    | meta     | Detects WezTerm -> wezterm, else ttyimg |
 
 Select with:
 ```lua
@@ -166,8 +166,7 @@ require('neo-img').setup({
 Autodetect (set `engine = 'auto'`):
 Priority order:
 1. TERM_PROGRAM contains 'WezTerm' and wezterm binary exists -> wezterm engine
-2. TERM contains 'kitty' -> ttyimg (protocol forced to kitty if backend = 'auto')
-3. fallback -> ttyimg
+2. fallback -> ttyimg
 
 WezTerm sizing: width is derived from `%` size * current total columns, passed via `--width <cells>`; height left auto for aspect.
 
